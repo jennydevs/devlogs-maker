@@ -59,52 +59,25 @@ func save_settings(user_set: Dictionary) -> void:
 		user_set.repo_name.text, 
 		user_set.content_path.text
 	];
-	
-	var build_image_url = "https://api.github.com/repos/%s/%s/contents/%s" % [
-		user_set.repo_owner.text, 
-		user_set.repo_name.text, 
-		user_set.image_path.text
+func get_user_input_areas():
+	var nodes = [
+		"VB/HB1/VB/RepoOwner", "VB/HB1/VB2/RepoName", "VB/RepoBranch", "VB/HB2/VB/ContentPath",
+		"VB/Author", "VB/Email"
+	];
+	var values = [
+		"repo_owner", "repo_name", "repo_branch_update", "content_path", 
+		"user_name", "user_email"
 	];
 	
-	config.set_value("urls", "base_repo", build_file_url);
-	config.set_value("urls", "base_image_repo", build_image_url);
-	
-	config.set_value("user_info", "user_name", get_node("VB/Author").text);
-	config.set_value("user_info", "user_email", get_node("VB/Email").text);
-	
-	config.save("user://config.cfg");
-	
-	create_notif_popup.emit("Saved!");
+	var content = {};
+	for i in range(0, values.size()):
+		content[values[i]] = get_node(nodes[i]);
 
-
-# ============================
-# ====== Signal Methods ======
-# ============================
-
-func _on_save_settings_pressed(apply_changes: bool) -> void:
-	var user_set = get_user_input_areas();
-	
-	if (apply_changes):
-		save_settings(user_set);
-	else: # cancel
-		setup_settings(user_set);
-
+	return content;
 
 # =====================
 # ====== Helpers ======
 # =====================
-
-func get_user_input_areas():
-	return {
-		"repo_owner": get_node("VB/HB1/VB/RepoOwner"),
-		"repo_name": get_node("VB/HB1/VB2/RepoName"),
-		"repo_branch": get_node("VB/RepoBranch"),
-		"content_path": get_node("VB/HB2/VB/ContentPath"),
-		"image_path": get_node("VB/HB2/VB2/ImagePath"),
-		"author": get_node("VB/Author"),
-		"email": get_node("VB/Email"),
-	};
-
 
 func load_config_file() -> ConfigFile:
 	var config = ConfigFile.new();
