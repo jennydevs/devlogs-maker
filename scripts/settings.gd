@@ -9,7 +9,6 @@ extends MarginContainer
 # =====================
 
 signal connect_startup(component: String);
-
 signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 
@@ -22,43 +21,38 @@ func startup() -> void:
 	get_node("VB/HB/Cancel").pressed.connect(_on_save_settings_pressed.bind(false));
 	
 	connect_startup.emit("settings");
+	update_settings(get_user_input_areas(), false);
 	
-	var user_set = get_user_input_areas();
 	
-	setup_settings(user_set);
-
-
-func setup_settings(user_set: Dictionary) -> void:
+func update_settings(user_set: Dictionary, apply_settings: bool) -> void:
 	var config = load_config_file();
-	
 	if (config == null): return;
 	 
-	user_set.author.text = config.get_value("user_info", "user_name");
-	user_set.email.text = config.get_value("user_info", "user_email");
+	var user_values = ["user_name", "user_email"];
+	var repo_values = ["repo_owner", "repo_name", "repo_branch_update", "content_path"];
 	
-	user_set.repo_owner.text = config.get_value("repo_info", "repo_owner");
-	user_set.repo_name.text = config.get_value("repo_info", "repo_name");
-	user_set.repo_branch.text = config.get_value("repo_info", "repo_branch_update");
-	user_set.content_path.text = config.get_value("repo_info", "content_path");
-	user_set.image_path.text = config.get_value("repo_info", "image_path");
+	if (apply_settings): # save
+		for repo_value in repo_values:
+			config.set_value("repo_info", repo_value, user_set[repo_value]['text']);
+		
+		var user_nodes = ["VB/Author", "VB/Email"];
+		for i in range(0, user_values.size()):
+			config.set_value("user_info", user_values[i], get_node(user_nodes[i])['text']);
+		
+		var upload_path = "https://api.github.com/repos/%s/%s/contents/%s" % [
+			user_set.repo_owner.text, user_set.repo_name.text, user_set.content_path.text
+		];
+		config.set_value("urls", "base_repo", upload_path);
+		
+		config.save("user://config.cfg");
+		create_notif_popup.emit("Saved!");
+	else: # load
+		for user_value in user_values:
+			user_set[user_value]['text'] = config.get_value("user_info", user_value);
+		for repo_value in repo_values:
+			user_set[repo_value]['text'] = config.get_value("repo_info", repo_value);
 
 
-func save_settings(user_set: Dictionary) -> void:
-	var config = load_config_file();
-	
-	if (config == null): return;
-	
-	config.set_value("repo_info", "repo_owner", user_set.repo_owner.text);
-	config.set_value("repo_info", "repo_name", user_set.repo_name.text);
-	config.set_value("repo_info", "repo_branch_update", user_set.repo_branch.text);
-	config.set_value("repo_info", "content_path", user_set.content_path.text);
-	config.set_value("repo_info", "image_path", user_set.image_path.text);
-	
-	var build_file_url = "https://api.github.com/repos/%s/%s/contents/%s" % [
-		user_set.repo_owner.text, 
-		user_set.repo_name.text, 
-		user_set.content_path.text
-	];
 func get_user_input_areas():
 	var nodes = [
 		"VB/HB1/VB/RepoOwner", "VB/HB1/VB2/RepoName", "VB/RepoBranch", "VB/HB2/VB/ContentPath",
