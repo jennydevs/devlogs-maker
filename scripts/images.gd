@@ -56,46 +56,19 @@ func save_img(img_data, img_name: String, img_path: String):
 	img_list.add_child(build_img_part(img_data, img_name, img_path));
 
 
-func build_img_part(img_data, img_name: String, img_path: String):
-	var panel_cont = PanelContainer.new();
-	panel_cont.size_flags_horizontal = Control.SIZE_EXPAND_FILL;
-	var bg_mat = load("res://assets/materials/image_part.tres");
-	panel_cont.add_theme_stylebox_override("panel", bg_mat);
-	panel_cont.set_meta("file_path", img_path + "/" + img_name.get_file());
-	panel_cont.set_meta("filename", img_name);
+func build_img_part(img_tex: ImageTexture, img_path: String):
+	var image_item = load("res://scenes/components/image_item.tscn").instantiate();
+	var filename = img_path.get_file();
 	
-	var hbox = HBoxContainer.new();
+	image_item.set_meta("file_path", img_path);
+	image_item.get_node("HB/Tex").texture = img_tex;
+	image_item.get_node("HB/Filename").text = filename;
+	var copy_button = image_item.get_node("HB/Copy");
+	copy_button.pressed.connect(_on_copy_button_pressed.bind(filename));
+	var delete_button = image_item.get_node("HB/Delete");
+	delete_button.pressed.connect(_on_delete_button_pressed.bind(image_item, img_path));
 	
-	var thumb = TextureRect.new();
-	thumb.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL;
-	thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED;
-	thumb.custom_minimum_size = Vector2(128,128);
-	
-	thumb.texture = img_data;
-	
-	var filename = Label.new();
-	filename.size_flags_horizontal = Control.SIZE_EXPAND_FILL;
-	filename.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS;
-	filename.text = img_name;
-	
-	var copy_button = Button.new();
-	copy_button.text = "Copy";
-	copy_button.pressed.connect(_on_copy_button_pressed.bind(copy_button));
-	copy_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER;
-	
-	var delete_button = Button.new();
-	delete_button.text = "Delete";
-	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
-	delete_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER;
-	
-	panel_cont.add_child(hbox);
-	hbox.add_child(thumb);
-	hbox.add_child(filename);
-	hbox.add_child(copy_button);
-	hbox.add_child(delete_button);
-	hbox.add_child(MarginContainer.new());
-	
-	return panel_cont;
+	return image_item;
 
 
 func _on_delete_button_pressed(delete_button: Button):
