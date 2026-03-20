@@ -12,6 +12,13 @@ signal connect_startup(component: String);
 signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 
+# ============================
+# ====== Signal Methods ======
+# ============================
+
+func _on_save_settings_pressed(apply_changes: bool) -> void:
+	update_settings(get_user_input_areas(), apply_changes);
+
 # =====================
 # ====== Methods ======
 # =====================
@@ -22,12 +29,12 @@ func startup() -> void:
 	
 	connect_startup.emit("settings");
 	update_settings(get_user_input_areas(), false);
-	
-	
+
+
 func update_settings(user_set: Dictionary, apply_settings: bool) -> void:
 	var config = load_config_file();
 	if (config == null): return;
-	 
+	
 	var user_values = ["user_name", "user_email"];
 	var repo_values = ["repo_owner", "repo_name", "repo_branch_update", "content_path"];
 	
