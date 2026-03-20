@@ -71,15 +71,15 @@ func build_img_part(img_tex: ImageTexture, img_path: String):
 	return image_item;
 
 
-func _on_delete_button_pressed(delete_button: Button):
+func _on_delete_button_pressed(image_item, img_path: String):
 	create_action_popup.emit(
 		"Are you sure you want to delete this image?",
 		{ 'yes': "Delete Image", 'no': "Cancel" },
-		_on_serious_delete_button_pressed.bind(delete_button) 
+		_on_serious_delete_button_pressed.bind(image_item, img_path) 
 	);
 
 
-func _on_serious_delete_button_pressed(delete_button: Button):
+func _on_serious_delete_button_pressed(image_item, img_path: String):
 	var request = Requests.new();
 	var config = request.load_config();
 	
@@ -87,19 +87,14 @@ func _on_serious_delete_button_pressed(delete_button: Button):
 		create_notif_popup.emit("Failed to load config file.");
 		return;
 	
-	var img_part = delete_button.get_parent().get_parent(); # panel container
-	var components = img_part.get_children();
-	for component in components:
-		if (component is Label):
-			var filename = component.text.get_file();
-			var img_path =  config.get_value("repo_info", "image_path");
-			var global_path = ProjectSettings.globalize_path("user://assets/" + img_path + filename);
-			var error = OS.move_to_trash(global_path); # TODO check for errors
-			if (error != OK):
-				create_notif_popup.emit("File doesn't exist / Unsupported\nDeleted image entry.");
+	var global_path = ProjectSettings.globalize_path(img_path);
+	var error = OS.move_to_trash(global_path); # TODO check for errors
+	if (error != OK):
+		create_notif_popup.emit("Failed to delete file / File doesn't exist");
+		return;
 	
-	img_part.queue_free();
+	image_item.queue_free();
 
-func _on_copy_button_pressed(copy_button):
-	DisplayServer.clipboard_set(copy_button.get_parent().get_parent().get_meta("filename"));
-	
+
+func _on_copy_button_pressed(filename):
+	DisplayServer.clipboard_set(filename);
