@@ -1,8 +1,8 @@
 extends MarginContainer
 
-## Description: This module is for modifying general settings, specifically
-## the owner, repo name, branch, and path where the text files are stored.
-## Also what name and email you will commit as.
+## This module is for updating your settings.
+## Update repo information and the path where the devlog will be uploaded to.
+## Update name and email to label your commits.
 
 # =====================
 # ====== Signals ======
