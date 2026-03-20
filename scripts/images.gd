@@ -7,53 +7,47 @@ signal create_notif_popup(msg);
 signal create_action_popup(msg, button_info, action);
 
 
-@onready var img_list = $Scroll/VBox;
+# =====================
+# ====== Methods ======
+# =====================
 
 func startup():
 	load_imgs();
-	
 	connect_startup.emit("images");
+
 
 func load_imgs():
 	var request = Requests.new();
 	var config = request.load_config();
-	
 	if (typeof(config) == TYPE_DICTIONARY): # error
 		create_notif_popup.emit("Failed to load config file.");
 		return;
 	
-	var img_path =  config.get_value("repo_info", "image_path");
-	img_path = img_path.rstrip("/");
 	var dir_access = DirAccess.open("user://");
-	
 	if (!dir_access.dir_exists("assets")): # startup
 		return;
-	
-	var path = "assets/%s" % img_path;
+
+	var path = "user://assets/images";
 	if (dir_access.dir_exists(path)):
 		dir_access.change_dir(path);
 		var files = dir_access.get_files();
 		for filename in files:
 			match filename.get_extension():
 				"jpg":
-					load_curr_img(img_path, filename);
+					setup_img(path + "/" + filename);
 				"png":
-					load_curr_img(img_path, filename);
+					setup_img(path + "/" + filename);
 				_:
 					pass;
 
 
-func load_curr_img(path: String, filename: String):
+func setup_img(img_path: String):
 	var img = Image.new();
-	img.load("user://assets/" + path + "/%s" % filename); # should check for errors
-	var tex = ImageTexture.new();
-	tex.set_image(img);
-	# specific to website here removing public folder
-	save_img(tex, path.replace("public", "") + "/" + filename, path);
-
-
-func save_img(img_data, img_name: String, img_path: String):
-	img_list.add_child(build_img_part(img_data, img_name, img_path));
+	var img_tex = ImageTexture.new();
+	img.load(img_path); # should check for errors
+	img_tex.set_image(img);
+	
+	img_list.add_child(build_img_part(img_tex, img_path));
 
 
 func build_img_part(img_tex: ImageTexture, img_path: String):
