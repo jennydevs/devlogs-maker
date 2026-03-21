@@ -311,22 +311,14 @@ func _on_export_file():
 	);
 
 
-func _on_import_file():
-	file_dialog.import_file();
-
-
-func _on_import_image():
-	file_dialog.import_image();
-
-
 func _on_connect_startup(component: String):
 	match component:
 		"menu_options":
 			menu_options.get_devlogs.connect(post_list._on_get_devlogs);
 			menu_options.post_curr_text.connect(_on_post_curr_text);
 			menu_options.clear_text.connect(_on_clear_text);
-			menu_options.import_image_file.connect(_on_import_image);
-			menu_options.import_file.connect(_on_import_file);
+			menu_options.import_image_file.connect(file_dialog.import_image);
+			menu_options.import_file.connect(file_dialog.import_file);
 			menu_options.export_file.connect(_on_export_file);
 		"file_dialog":
 			file_dialog.clear_post.connect(clear_post);
