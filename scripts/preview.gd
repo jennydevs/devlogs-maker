@@ -93,16 +93,16 @@ func process_post(post_data: Dictionary, img_list):
 func get_image_texture(img_line: String, img_list):
 	var img_path = img_line.get_slice("(", 1);
 	var link_end = img_path.find(")");
-	img_path = img_path.substr(0, link_end); # if there are additional chars at the end
+	img_path = img_path.substr(0, link_end);
 	
+	var filenames = img_list.get_filenames();
+	var file_paths = img_list.get_file_paths();
 	var imgs = img_list.get_children();
-	for x in range(1, imgs.size(), 1): #ignoring title
-			var img_name = imgs[x].get_meta("file_path");
-			if (img_name.replace("public", "") == img_path):
-				var components = imgs[x].get_child(0).get_children(); # hbox holds all
-				for component in components:
-					if (component is TextureRect):
-						return component.texture;
+	
+	var found_img_index = filenames.find(img_path);
+	if (found_img_index != -1):
+		var image_item = imgs[found_img_index + 1]; # +1 to skip title
+		return image_item.get_node("HB/Tex").texture;
 	
 	return null;
 
