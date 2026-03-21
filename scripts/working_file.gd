@@ -184,3 +184,5 @@ func setup_images_folder():
 	var dir_access = DirAccess.open("user://assets");
 	if (!dir_access.dir_exists("images")):
 		return dir_access.make_dir("images");
+	
+	return OK;
