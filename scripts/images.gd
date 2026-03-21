@@ -87,7 +87,7 @@ func setup_img(img_path: String):
 	img.load(img_path); # should check for errors
 	img_tex.set_image(img);
 	
-	img_list.add_child(build_img_part(img_tex, img_path));
+	build_img_part(img_tex, img_path);
 
 
 func build_img_part(img_tex: ImageTexture, img_path: String):
@@ -102,4 +102,4 @@ func build_img_part(img_tex: ImageTexture, img_path: String):
 	var delete_button = image_item.get_node("HB/Delete");
 	delete_button.pressed.connect(_on_delete_button_pressed.bind(image_item, img_path));
 	
-	return image_item;
+	img_list.add_child(image_item);
