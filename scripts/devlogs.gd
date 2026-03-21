@@ -309,18 +309,6 @@ func fill_in_details(post_info: Dictionary):
 	update_preview();
 
 
-func _on_export_file():
-	if (finalize.get_filename() == ""):
-		create_notif_popup.emit("You haven't named your file yet!");
-		return;
-	
-	file_dialog.export_file(
-		finalize.get_filename(), 
-		text_preview.get_text(), 
-		text_preview.process_post_for_imgs(images.img_list)
-	);
-
-
 func _on_connect_startup(component: String):
 	match component:
 		"menu_options":
@@ -329,7 +317,11 @@ func _on_connect_startup(component: String):
 			menu_options.clear_text.connect(_on_clear_text);
 			menu_options.import_image_file.connect(file_dialog.import_image);
 			menu_options.import_file.connect(file_dialog.import_file);
-			menu_options.export_file.connect(_on_export_file);
+			menu_options.export_file.connect(file_dialog._on_export_file.bind({
+				"filename": finalize.get_filename(), 
+				"text_preview": text_preview.get_text(),
+				"img_list": text_preview.process_post_for_imgs(images.img_list)
+			}));
 		"file_dialog":
 			file_dialog.clear_post.connect(clear_post);
 			file_dialog.fill_in_details.connect(fill_in_details);
