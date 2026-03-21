@@ -110,21 +110,22 @@ func get_image_texture(img_line: String, img_list):
 func process_post_for_imgs(img_list):
 	var post_lines = plain_text_post.split("\n", true);
 	
-	var img_paths: Array[String] = [];
-	var imgs_to_send: Array[String] = [];
+	var imgs_in_devlog: Array[String] = [];
 	for line in post_lines:
 		if (line.contains("![")): # image
-			img_paths.append(line.substr(line.find("(") + 1, line.find(")") - line.find("(") - 1));
+			imgs_in_devlog.append(line.substr(line.find("(") + 1, line.find(")") - line.find("(") - 1));
 	
+	var file_paths = img_list.get_file_paths();
+	var filenames = img_list.get_filenames();
 	var dir_access = DirAccess.open("user://");
-	var imgs = img_list.get_children();
 	
-	for img_path in img_paths:
-		for x in range(1, imgs.size(), 1): #ignoring title
-			var img_name = imgs[x].get_meta("file_path");
-			if (img_name.replace("public", "") == img_path):
-				if (dir_access.file_exists("user://assets/" + img_name)):
-					imgs_to_send.append(img_name);
+	var imgs_to_send: Array[String] = [];
+	for img in imgs_in_devlog:
+		var found_img_index = filenames.find(img);
+		if (found_img_index != -1):
+			var img_path = file_paths[found_img_index];
+			if (dir_access.file_exists(img_path)):
+				imgs_to_send.append(img_path);
 	
 	return imgs_to_send;
 
