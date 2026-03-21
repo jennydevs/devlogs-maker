@@ -3,8 +3,7 @@ extends FileDialog
 signal connect_startup(component: String);
 signal fill_in_details(post_info: Dictionary);
 signal clear_post;
-signal collected_img(img_data, img_name: String, img_path: String);
-
+signal add_to_image_list(img_data: ImageTexture, img_path: String);
 signal create_notif_popup(msg);
 signal create_action_popup(msg, button_info, action);
 
