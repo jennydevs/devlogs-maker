@@ -319,10 +319,6 @@ func _on_import_image():
 	file_dialog.import_image();
 
 
-func _on_collected_img(img_data, img_name: String, img_path: String):
-	images.save_img(img_data, img_name, img_path);
-
-
 func _on_connect_startup(component: String):
 	match component:
 		"menu_options":
@@ -335,7 +331,7 @@ func _on_connect_startup(component: String):
 		"file_dialog":
 			file_dialog.clear_post.connect(clear_post);
 			file_dialog.fill_in_details.connect(fill_in_details);
-			file_dialog.collected_img.connect(_on_collected_img);
+			file_dialog.add_to_image_list.connect(images.build_img_part);
 			file_dialog.create_notif_popup.connect(workspace_container.create_notif_popup);
 			file_dialog.create_action_popup.connect(workspace_container.create_action_popup);
 		"images":
