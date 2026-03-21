@@ -66,7 +66,7 @@ func process_post(post_data: Dictionary, img_list):
 			var tex = get_image_texture(line, img_list);
 			if (tex):
 				post_preview.push_paragraph(HORIZONTAL_ALIGNMENT_CENTER);
-				post_preview.add_image(tex, 128);
+				post_preview.add_image(tex, self.size.x * (0.75)); # width of box * size %
 				post_preview.pop();
 			
 			post_preview.add_text(addt_end_txt);
