@@ -19,6 +19,7 @@ signal create_action_popup(msg, button_info, action);
 # ====== Signal Methods ======
 # ============================
 
+## Warns you before permanently deleting the image
 func _on_delete_button_pressed(image_item, img_path: String):
 	create_action_popup.emit(
 		"Are you sure you want to delete this image?",
@@ -26,7 +27,7 @@ func _on_delete_button_pressed(image_item, img_path: String):
 		_on_serious_delete_button_pressed.bind(image_item, img_path) 
 	);
 
-
+## Really deletes the image, and the node associated with it
 func _on_serious_delete_button_pressed(image_item, img_path: String):
 	var request = Requests.new();
 	var config = request.load_config();
@@ -43,7 +44,7 @@ func _on_serious_delete_button_pressed(image_item, img_path: String):
 	
 	image_item.queue_free();
 
-
+## Copies the image filename to your clipboard
 func _on_copy_button_pressed(filename):
 	DisplayServer.clipboard_set(filename);
 
@@ -55,7 +56,7 @@ func startup():
 	load_imgs();
 	connect_startup.emit("images");
 
-
+## Set up the image list with each image saved in the assets/images/ filepath
 func load_imgs():
 	var request = Requests.new();
 	var config = request.load_config();
@@ -80,8 +81,8 @@ func load_imgs():
 				_:
 					pass;
 
-
-func setup_img(img_path: String):
+## Creates the image texture for building the image item node
+func setup_img(img_path: String) -> void:
 	var img = Image.new();
 	var img_tex = ImageTexture.new();
 	img.load(img_path); # should check for errors
@@ -89,8 +90,8 @@ func setup_img(img_path: String):
 	
 	build_img_part(img_tex, img_path);
 
-
-func build_img_part(img_tex: ImageTexture, img_path: String):
+## Sets up the visual representation of the image and add it to the tree
+func build_img_part(img_tex: ImageTexture, img_path: String) -> void:
 	var image_item = load("res://scenes/components/image_item.tscn").instantiate();
 	var filename = img_path.get_file();
 	
