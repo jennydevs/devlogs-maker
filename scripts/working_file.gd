@@ -170,10 +170,7 @@ func check_file_name(curr_file_name: String) -> String:
 	return "";
 
 
-func setup_assets_folder():
-	var dir_access = DirAccess.open("user://");
-	
-	if (!dir_access.dir_exists("assets/images")):
-		var error = dir_access.make_dir_recursive("assets/images");
-		if (error != OK):
-			create_notif_popup.emit("Failed to setup assets folders!");
+func setup_images_folder():
+	var dir_access = DirAccess.open("user://assets");
+	if (!dir_access.dir_exists("images")):
+		return dir_access.make_dir("images");
