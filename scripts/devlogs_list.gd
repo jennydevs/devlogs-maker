@@ -23,29 +23,22 @@ func startup():
 
 
 func create_post_info(new_filename: String, url: String, sha: String):
-	var container = HBoxContainer.new();
-	var button = Button.new();
-	var delete_button = Button.new();
-	var a_post = Label.new();
+	var post_item = load("res://scenes/components/post_item.tscn").instantiate();
 	
-	container.add_child(a_post);
-	a_post.text = new_filename;
-	a_post.size_flags_horizontal = Control.SIZE_EXPAND_FILL;
+	post_item.get_node("Filename").text = new_filename;
 	
-	container.add_child(button);
-	button.text = "Edit";
-	button.set_meta("url", url);
-	button.set_meta("sha", sha);
-	button.set_meta("name", new_filename);
-	button.pressed.connect(_on_edit_button_pressed.bind(button));
+	var edit_button = post_item.get_node("Edit");
+	edit_button.set_meta("url", url);
+	edit_button.set_meta("sha", sha);
+	edit_button.set_meta("name", new_filename);
+	edit_button.pressed.connect(_on_edit_button_pressed.bind(edit_button));
 	
-	container.add_child(delete_button);
-	delete_button.text = "Delete";
+	var delete_button = post_item.get_node("Delete");
 	delete_button.set_meta("name", new_filename);
 	delete_button.set_meta("sha", sha);
 	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
 	
-	list.add_child(container);
+	list.add_child(post_item);
 
 
 func clear_list():
