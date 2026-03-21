@@ -79,6 +79,36 @@ func import_image():
 
 
 func _on_file_selected(path: String):
+	if (!FileAccess.file_exists(path) || file_mode == FileDialog.FileMode.FILE_MODE_SAVE_FILE):
+		return;
+	
+	if (curr_file_mode == "txt_file"):
+		var filename = path.get_file();
+		
+		if (check_file_name(filename) == ""):
+			create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
+			return;
+		
+		clear_post.emit();
+		
+		var post_data = {
+			"filename": filename,
+		};
+		
+		var txt_file = FileAccess.open(path, FileAccess.READ_WRITE);
+		txt_file.get_line(); # ignore first line, date edited
+		
+		post_data["creation_date"] = txt_file.get_line();
+		post_data["post_title"] = txt_file.get_line();
+		post_data["post_summary"] = txt_file.get_line();
+		
+		var text = "";
+		while txt_file.get_position() < txt_file.get_length():
+			text += txt_file.get_line() + "\n";
+		
+		post_data["post_body"] = text;
+		
+		fill_in_details.emit(post_data);
 	elif (curr_file_mode == "img_file"):
 		setup_assets_folder();
 		
