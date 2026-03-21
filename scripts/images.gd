@@ -8,6 +8,13 @@ extends MarginContainer
 @onready var img_list = $Scroll/VBox;
 
 # =====================
+# ===== Variables =====
+# =====================
+
+var img_file_paths: Array[String] = [];
+var img_filenames: Array[String] = [];
+
+# =====================
 # ====== Signals ======
 # =====================
 
@@ -42,6 +49,8 @@ func _on_serious_delete_button_pressed(image_item, img_path: String):
 		create_notif_popup.emit("Failed to delete file / File doesn't exist");
 		return;
 	
+	img_file_paths.erase(img_path);
+	img_filenames.erase(img_path.get_file());
 	image_item.queue_free();
 
 ## Copies the image filename to your clipboard
@@ -95,6 +104,10 @@ func build_img_part(img_tex: ImageTexture, img_path: String) -> void:
 	var image_item = load("res://scenes/components/image_item.tscn").instantiate();
 	var filename = img_path.get_file();
 	
+	# for quick access in preview
+	img_file_paths.append(img_path);
+	img_filenames.append(filename);
+	
 	image_item.set_meta("file_path", img_path);
 	image_item.get_node("HB/Tex").texture = img_tex;
 	image_item.get_node("HB/Filename").text = filename;
@@ -104,3 +117,11 @@ func build_img_part(img_tex: ImageTexture, img_path: String) -> void:
 	delete_button.pressed.connect(_on_delete_button_pressed.bind(image_item, img_path));
 	
 	img_list.add_child(image_item);
+
+
+func get_file_paths():
+	return img_file_paths;
+
+
+func get_filenames():
+	return img_filenames;
