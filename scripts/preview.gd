@@ -58,7 +58,7 @@ func process_post(post_data: Dictionary, img_list):
 			post_preview.add_text(a_line);
 			post_preview.pop();
 			post_preview.newline();
-		elif (line.contains("![")): # image
+		elif (line.contains("![") && line.contains(")")): # image
 			var addt_txt = line.substr(0, line.find("!"));
 			var addt_end_txt = line.substr(line.find(")") + 1);
 			post_preview.add_text(addt_txt);
@@ -112,7 +112,7 @@ func process_post_for_imgs(img_list):
 	
 	var imgs_in_devlog: Array[String] = [];
 	for line in post_lines:
-		if (line.contains("![")): # image link in markdown format
+		if (line.contains("![") && line.contains(")")): # image link in markdown format
 			var left_side = line.find("(");
 			var right_side = line.find(")");
 			imgs_in_devlog.append(line.substr(left_side + 1, right_side - left_side - 1));
