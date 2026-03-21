@@ -125,17 +125,10 @@ func check_file_name(curr_file_name: String) -> String:
 	return "";
 
 
-func create_img_folder(config: ConfigFile):
+func setup_assets_folder():
 	var dir_access = DirAccess.open("user://");
-	if (!dir_access.dir_exists("assets")):
-		var error = dir_access.make_dir("assets");
-		if (error != OK):
-			create_notif_popup.emit("Failed to create assets folder!");
 	
-	var img_path = config.get_value("repo_info", "image_path");
-	img_path = img_path.rstrip("/");
-	if (!dir_access.dir_exists("assets/%s" % img_path)):
-		var error = dir_access.make_dir_recursive("assets/%s" % img_path);
+	if (!dir_access.dir_exists("assets/images")):
+		var error = dir_access.make_dir_recursive("assets/images");
 		if (error != OK):
-			create_notif_popup.emit("Failed to create folder(s) for image!");
-	
+			create_notif_popup.emit("Failed to setup assets folders!");
