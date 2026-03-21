@@ -125,3 +125,7 @@ func get_file_paths():
 
 func get_filenames():
 	return img_filenames;
+
+
+func get_image_list():
+	return img_list;

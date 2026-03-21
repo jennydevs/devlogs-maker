@@ -271,7 +271,7 @@ func update_preview():
 		"post_title": finalize.get_post_title(),
 		"post_summary": finalize.get_post_summary(),
 		"post_body": editor.get_text(),
-		"post_images": images.img_list
+		"post_images": images
 	});
 
 
