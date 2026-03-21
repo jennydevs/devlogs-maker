@@ -1,5 +1,7 @@
 extends FileDialog
 
+## This module is for interacting with the filesystem.
+## Importing devlogs, images, and exporting devlogs with their corresponding images.
 
 # ====================
 # ====== Signal ======
@@ -92,7 +94,7 @@ func startup():
 	current_dir = OS.get_system_dir(OS.SystemDir.SYSTEM_DIR_DOWNLOADS);
 	connect_startup.emit("file_dialog");
 
-
+## Sets filter to view all files with the text extension 'txt'
 func import_file():
 	file_mode = FileDialog.FileMode.FILE_MODE_OPEN_FILE;
 	curr_file_mode = "txt_file";
@@ -100,10 +102,17 @@ func import_file():
 	add_filter("*.txt", "Text Files");
 	show();
 
+## Sets filter to view all files with the image extensions 'png' and 'jpg'.
+func import_image():
+	file_mode = FileDialog.FileMode.FILE_MODE_OPEN_FILE;
+	curr_file_mode = "img_file";
+	clear_filters();
+	add_filter("*.png, *.jpg", "Image Files");
+	show();
+
 
 func export_file(filename: String, file_text: String, file_img_paths: Array[String]):
 	var download_path = OS.get_system_dir(OS.SystemDir.SYSTEM_DIR_DOWNLOADS);
-	
 	var dir_access = DirAccess.open(download_path);
 	
 	var folder_name = filename.replace("." + filename.get_extension(), "");
@@ -143,14 +152,6 @@ func save_post_files(
 			"png":
 				img.save_png("%s/%s/%s" % [download_path, folder_name, img_path.get_file()]);
 	create_notif_popup.emit("Saved file(s)!");
-
-
-func import_image():
-	file_mode = FileDialog.FileMode.FILE_MODE_OPEN_FILE;
-	curr_file_mode = "img_file";
-	clear_filters();
-	add_filter("*.png, *.jpg", "Image Files");
-	show();
 
 
 func check_file_name(curr_file_name: String) -> String:
