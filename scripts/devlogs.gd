@@ -48,6 +48,14 @@ func _ready():
 		if (module.has_signal("connect_startup")):
 			module.connect_startup.connect(_on_connect_startup);
 			module.startup();
+	
+	setup_assets_folder();
+
+func setup_assets_folder():
+	var dir_access = DirAccess.open("user://");
+	if (!dir_access.dir_exists("assets")):
+		return dir_access.make_dir("assets");
+
 
 
 # ==========================
