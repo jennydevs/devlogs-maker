@@ -32,19 +32,21 @@ var commit_sha: String = "";
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	var modules = [
-		menu_options, file_dialog, 
+		self, menu_options, file_dialog, 
 		images, post_list, 
 		settings, verify_user
 	];
-	
-	self.create_error_popup.connect(workspace_container.create_error_popup);
-	self.create_notif_popup.connect(workspace_container.create_notif_popup);
-	self.create_action_popup.connect(workspace_container.create_action_popup);
 	
 	editor.startup(update_preview);
 	finalize.startup(_on_text_changed_preview, update_preview);
 	
 	for module in modules:
+		if (module.has_signal("create_error_popup")):
+			module.create_error_popup.connect(workspace_container.create_error_popup);
+		if (module.has_signal("create_notif_popup")):
+			module.create_notif_popup.connect(workspace_container.create_notif_popup);
+		if (module.has_signal("create_action_popup")):
+			module.create_action_popup.connect(workspace_container.create_action_popup);
 		if (module.has_signal("connect_startup")):
 			module.connect_startup.connect(_on_connect_startup);
 			module.startup();
@@ -332,23 +334,14 @@ func _on_connect_startup(component: String):
 			file_dialog.clear_post.connect(clear_post);
 			file_dialog.fill_in_details.connect(fill_in_details);
 			file_dialog.add_to_image_list.connect(images.build_img_part);
-			file_dialog.create_notif_popup.connect(workspace_container.create_notif_popup);
-			file_dialog.create_action_popup.connect(workspace_container.create_action_popup);
 		"images":
-			images.create_notif_popup.connect(workspace_container.create_notif_popup);
-			images.create_action_popup.connect(workspace_container.create_action_popup);
+			pass;
 		"verify_user":
 			verify_user.enable_buttons.connect(_on_enable_buttons);
 			verify_user.refresh_token_expired.connect(_on_token_expired.bind(true));
 			verify_user.user_token_expired.connect(_on_token_expired.bind(false));
-			verify_user.create_error_popup.connect(workspace_container.create_error_popup);
-			verify_user.create_notif_popup.connect(workspace_container.create_notif_popup);
 		"settings":
-			settings.create_error_popup.connect(workspace_container.create_error_popup);
-			settings.create_notif_popup.connect(workspace_container.create_notif_popup);
+			pass;
 		"devlogs_list":
 			post_list.clear_post.connect(clear_post);
 			post_list.fill_in_details.connect(fill_in_details);
-			post_list.create_error_popup.connect(workspace_container.create_error_popup);
-			post_list.create_notif_popup.connect(workspace_container.create_notif_popup);
-			post_list.create_action_popup.connect(workspace_container.create_action_popup);
