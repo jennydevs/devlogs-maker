@@ -22,7 +22,66 @@ var curr_file_mode = "";
 # ====== Signal Methods ======
 # ============================
 
-
+func _on_file_selected(path: String):
+	if (!FileAccess.file_exists(path) || file_mode == FileDialog.FileMode.FILE_MODE_SAVE_FILE):
+		return;
+	
+	if (curr_file_mode == "txt_file"):
+		var filename = path.get_file();
+		
+		if (check_file_name(filename) == ""):
+			create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
+			return;
+		
+		clear_post.emit();
+		
+		var post_data = {
+			"filename": filename,
+		};
+		
+		var txt_file = FileAccess.open(path, FileAccess.READ_WRITE);
+		txt_file.get_line(); # ignore first line, date edited
+		
+		post_data["creation_date"] = txt_file.get_line();
+		post_data["post_title"] = txt_file.get_line();
+		post_data["post_summary"] = txt_file.get_line();
+		
+		var text = "";
+		while txt_file.get_position() < txt_file.get_length():
+			text += txt_file.get_line() + "\n";
+		
+		post_data["post_body"] = text;
+		
+		fill_in_details.emit(post_data);
+	elif (curr_file_mode == "img_file"):
+		var error = setup_images_folder();
+		if (error != OK):
+			create_notif_popup.emit("Failed to setup images folder!\nPlease try again.");
+			return;
+		
+		var file_exts = ["jpg", "png"];
+		var filename = path.get_file();
+		var img_ext = filename.get_extension();
+		
+		if (!file_exts.has(img_ext)):
+			create_notif_popup.emit("Unsupported image extension!");
+			return;
+		
+		var tex = ImageTexture.new();
+		var img = Image.new();
+		img.load(path);
+		
+		var save_path = "user://assets/images/" + filename;
+		
+		match img_ext:
+			"jpg":
+				img.save_jpg(save_path, 1.0);
+			"png":
+				img.save_png(save_path);
+	
+		tex.set_image(img);
+		
+		add_to_image_list.emit(tex, save_path);
 
 # =====================
 # ====== Methods ======
@@ -92,65 +151,6 @@ func import_image():
 	clear_filters();
 	add_filter("*.png, *.jpg", "Image Files");
 	show();
-
-
-func _on_file_selected(path: String):
-	if (!FileAccess.file_exists(path) || file_mode == FileDialog.FileMode.FILE_MODE_SAVE_FILE):
-		return;
-	
-	if (curr_file_mode == "txt_file"):
-		var filename = path.get_file();
-		
-		if (check_file_name(filename) == ""):
-			create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
-			return;
-		
-		clear_post.emit();
-		
-		var post_data = {
-			"filename": filename,
-		};
-		
-		var txt_file = FileAccess.open(path, FileAccess.READ_WRITE);
-		txt_file.get_line(); # ignore first line, date edited
-		
-		post_data["creation_date"] = txt_file.get_line();
-		post_data["post_title"] = txt_file.get_line();
-		post_data["post_summary"] = txt_file.get_line();
-		
-		var text = "";
-		while txt_file.get_position() < txt_file.get_length():
-			text += txt_file.get_line() + "\n";
-		
-		post_data["post_body"] = text;
-		
-		fill_in_details.emit(post_data);
-	elif (curr_file_mode == "img_file"):
-		setup_assets_folder();
-		
-		var file_exts = ["jpg", "png"];
-		var filename = path.get_file();
-		var img_ext = filename.get_extension();
-		
-		if (!file_exts.has(img_ext)):
-			create_notif_popup.emit("Unsupported image extension!");
-			return;
-		
-		var tex = ImageTexture.new();
-		var img = Image.new();
-		img.load(path);
-		
-		var save_path = "user://assets/images/" + filename;
-		
-		match img_ext:
-			"jpg":
-				img.save_jpg(save_path, 1.0);
-			"png":
-				img.save_png(save_path);
-	
-		tex.set_image(img);
-		
-		add_to_image_list.emit(tex, save_path);
 
 
 func check_file_name(curr_file_name: String) -> String:
