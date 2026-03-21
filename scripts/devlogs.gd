@@ -320,7 +320,7 @@ func _on_connect_startup(component: String):
 			menu_options.export_file.connect(file_dialog._on_export_file.bind({
 				"filename": finalize.get_filename(), 
 				"text_preview": text_preview.get_text(),
-				"img_list": text_preview.process_post_for_imgs(images.img_list)
+				"img_list": text_preview.process_post_for_imgs(images)
 			}));
 		"file_dialog":
 			file_dialog.clear_post.connect(clear_post);
