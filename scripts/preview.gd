@@ -112,8 +112,10 @@ func process_post_for_imgs(img_list):
 	
 	var imgs_in_devlog: Array[String] = [];
 	for line in post_lines:
-		if (line.contains("![")): # image
-			imgs_in_devlog.append(line.substr(line.find("(") + 1, line.find(")") - line.find("(") - 1));
+		if (line.contains("![")): # image link in markdown format
+			var left_side = line.find("(");
+			var right_side = line.find(")");
+			imgs_in_devlog.append(line.substr(left_side + 1, right_side - left_side - 1));
 	
 	var file_paths = img_list.get_file_paths();
 	var filenames = img_list.get_filenames();
