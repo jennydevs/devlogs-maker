@@ -96,7 +96,6 @@ func get_image_texture(img_line: String, images):
 	img_path = img_path.substr(0, link_end);
 	
 	var filenames = images.get_filenames();
-	var file_paths = images.get_file_paths();
 	var img_list = images.get_image_list();
 	
 	var found_img_index = filenames.find(img_path);
