@@ -140,17 +140,29 @@ func save_post_files(
 	download_path: String, folder_name: String, filename: String, 
 	file_text: String, file_img_paths: Array[String]
 ):
-	var created_file = FileAccess.open(download_path + "/" + folder_name + "/" + filename, FileAccess.WRITE);
+	var folder_path = download_path + "/" + folder_name + "/";
+	var created_file = FileAccess.open(folder_path + filename, FileAccess.WRITE);
 	if (created_file.is_open()):
 		created_file.store_string(file_text);
-	for img_path in file_img_paths:
-		var img = Image.new();
-		img.load("user://assets/" + img_path);
-		match img_path.get_file().get_extension():
-			"jpg":
-				img.save_jpg("%s/%s/%s" % [download_path, folder_name, img_path.get_file()]);
-			"png":
-				img.save_png("%s/%s/%s" % [download_path, folder_name, img_path.get_file()]);
+	
+	if (file_img_paths.size() != 0):
+		var dir_access = DirAccess.open(folder_path);
+		if (!dir_access.dir_exists("images")):
+			var error = dir_access.make_dir("images");
+			if (error != OK):
+				create_notif_popup.emit("Error %d\nFailed to create image folder to store images!" % error);
+				return;
+		
+		var image_folder_path = folder_path + "images/";
+		for img_path in file_img_paths:
+			var img = Image.new();
+			img.load(img_path);
+			match img_path.get_file().get_extension():
+				"jpg":
+					img.save_jpg(image_folder_path + img_path.get_file(), 1.0);
+				"png":
+					img.save_png(image_folder_path + img_path.get_file());
+	
 	create_notif_popup.emit("Saved file(s)!");
 
 
