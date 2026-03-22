@@ -1,14 +1,25 @@
 extends MarginContainer
 
+# =====================
+# ======= Nodes =======
+# =====================
+
+@onready var list = $ScrollContainer/List;
+
+# =====================
+# ====== Signals ======
+# =====================
+
 signal connect_startup(component: String);
 signal clear_post;
 signal fill_in_details(post_info: Dictionary);
-
 signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 signal create_action_popup(msg, button_info, action);
 
-@onready var list = $ScrollContainer/List;
+# =====================
+# ===== Variables =====
+# =====================
 
 var edit_button_ref = null;
 var directory = {
