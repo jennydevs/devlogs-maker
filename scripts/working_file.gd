@@ -85,15 +85,6 @@ func _on_file_selected(path: String):
 		
 		add_to_image_list.emit(tex, save_path);
 
-
-func _on_export_file(file_data: Dictionary):
-	if (file_data.filename == ""):
-		create_notif_popup.emit("You haven't named your file yet!");
-		return;
-	
-	export_file(file_data.filename, file_data.text_preview, file_data.img_list);
-
-
 # =====================
 # ====== Methods ======
 # =====================
