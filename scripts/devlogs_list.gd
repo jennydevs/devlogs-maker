@@ -74,7 +74,6 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 					for entry in response:
 						if (entry["type"] == "dir"):
 							devlogs[entry["name"]] = { 
-								"path": entry["path"],
 								"sha": entry["sha"],
 								"git_url": entry["git_url"]
 							};
@@ -87,16 +86,13 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 				"get_directory":
 					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
 					directory["sha"] = response["sha"];
-				"get_devlog":
-					fill_out_devlog(body_str);
-				"delete_devlog":
+				_:
 					pass;
 		_:
 			pass;
 	
 	msg = request.build_notif_msg(action, response_code, body_str);
-	if (msg != ""):
-		create_notif_popup.emit(msg);
+	if (msg != ""): create_notif_popup.emit(msg);
 
 
 func _on_edit_button_pressed(folder_name: String):
@@ -170,13 +166,12 @@ func create_post_info(filename: String):
 func setup_devlogs_list():
 	var devlog_names = devlogs.keys();
 	for devlog_name in devlog_names:
-		create_post_info(devlog);
-
+		create_post_info(devlog_name);
 
 ## Deletes the devlog nodes in the list.
 func clear_list():
 	var amt_of_children = list.get_child_count();
-	if (amt_of_children > 1): # tthere is more than just the title
+	if (amt_of_children > 1): # if there is more than just the title
 		var children = list.get_children();
 		for i in range(amt_of_children - 1, 0, -1):
 			list.remove_child(children[i]);
@@ -222,7 +217,7 @@ func set_edit_ref(updated):
 
 ## Update the directory given a filename and an action 
 ## action: String, "add_filename" / "delete_filename" 
-func update_directory(filename: String, action: String):
+func update_directory(folder_name: String, action: String):
 	var request = Requests.new();
 	var config = request.load_config();
 	if (!config is ConfigFile):
@@ -241,16 +236,15 @@ func update_directory(filename: String, action: String):
 	
 	var commit_data = { "sha": directory["sha"] };
 	var update_content = directory["data"];
-	var trimmed_filename = filename.trim_suffix("." + filename.get_extension());
 	
 	if (action == "add_filename"):
-		update_content = trimmed_filename + "\n" + directory["data"];
-		commit_data["msg"] = "Add devlog to directory!";
+		update_content = folder_name + "\n" + directory["data"];
+		commit_data["msg"] = "Add devlog to directory.";
 	elif (action == "delete_filename"):
-		var index = directory["data"].find(trimmed_filename);
+		var index = directory["data"].find(folder_name);
 		if (index == -1): return;
-		update_content = directory["data"].erase(index, trimmed_filename.length() + 1); # + '\n'
-		commit_data["msg"] = "Delete devlog from directory!";
+		update_content = directory["data"].erase(index, folder_name.length() + 1); # + '\n'
+		commit_data["msg"] = "Delete devlog from directory.";
 	
 	commit_data["content"] = update_content;
 	
