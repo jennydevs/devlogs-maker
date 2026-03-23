@@ -14,7 +14,6 @@ enum AcceptType {
 	Raw,
 }
 
-
 # =====================
 # === Main Methods ====
 # =====================
@@ -29,8 +28,7 @@ func make_http_request(
 	
 	var error = h_client.request(url, headers, method, request_data);
 	
-	if (error != OK):
-		return { "error": error, "error_type": AppInfo.ErrorType.HTTPError };
+	if (error != OK): return { "error": error, "error_type": AppInfo.ErrorType.HTTPError };
 	
 	return { "request_signal": h_client.request_completed };
 
@@ -205,35 +203,28 @@ func get_file(
 		HTTPClient.METHOD_GET, url, headers
 	);
 
-
-## Must have path to file, including filename
+## Upload a file to given path to either create or update (edit) it
 ## commit_data: Dictionary { 
-##  "content": String, 
-##  "msg": String, 
-##  "sha": String / optional, BUT REQUIRED for editing
+##  "content": String, "msg": String, "sha": String <- sha REQUIRED for EDITING
 ## }
 func create_update_file(
-	scene: Node, action: String, path: String, commit_data: Dictionary
+	scene: Node, action: String, upload_path: String, commit_data: Dictionary
 ):
 	var config = load_config();
-	
-	if (!config is ConfigFile):
-		return config;
+	if (!config is ConfigFile): return config;
 	
 	var body_data = { "content": commit_data["content"] };
-	if (commit_data.has("sha")):
-		body_data["sha"] = commit_data["sha"];
+	if (commit_data.has("sha")): body_data["sha"] = commit_data["sha"];
 	
 	var body_str = create_commit_body(config, commit_data["msg"], body_data);
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData,
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/contents/%s" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
-		path
+		upload_path
 	];
 	
 	return make_http_request(
@@ -241,28 +232,22 @@ func create_update_file(
 		HTTPClient.METHOD_PUT, url, headers, body_str
 	);
 
-## Must have path to file including filename
-## file_data: Dictionary {
-##   "sha": String, 
-## }
-func delete_file(scene: Node, action: String, path: String, file_sha: String):
+## Delete a file at the given path
+## file_data: Dictionary { "sha": String }
+func delete_file(scene: Node, action: String, delete_path: String, file_sha: String):
 	var config = load_config();
 	
-	if (!config is ConfigFile):
-		return config;
+	if (!config is ConfigFile): return config;
 	
-	var body_str = create_commit_body(config, "Deleted devlog!", 
-		{ "sha": file_sha }
-	);
+	var body_str = create_commit_body(config, "Deleted devlog!", { "sha": file_sha });
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData, 
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/contents/%s" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
-		path
+		delete_path
 	];
 	
 	return make_http_request(
