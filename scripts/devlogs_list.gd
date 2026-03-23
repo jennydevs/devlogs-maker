@@ -49,7 +49,7 @@ func _on_get_devlogs():
 		return;
 	
 	var devlogs_path = config.get_value("repo_info", "content_path");
-	var result = request.get_files(self, "get_devlog_files", devlogs_path);
+	var result = request.get_files(self, "get_devlogs_files", devlogs_path);
 	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -113,7 +113,7 @@ func _on_delete_button_pressed(folder_name: String, post_item: Node):
 	create_action_popup.emit(
 		"Are you sure you want to delete this post?\nIf you're currently editing it, it will be cleared too.",
 		{ 'yes': "Delete devlog", 'no': "Cancel" },
-		_on_serious_delete_button_pressed.bind(folder_name) 
+		_on_serious_delete_button_pressed.bind(folder_name, post_item) 
 	);
 
 
@@ -179,7 +179,6 @@ func clear_list():
 
 
 func fill_in_devlog():
-	var devlog_name = edit_devlog["name"];
 	var whole_devlog = edit_devlog["decoded_content"];
 	var text_chunks = whole_devlog.rsplit("\n");
 	var post_data = {
@@ -197,24 +196,12 @@ func fill_in_devlog():
 	#create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
 
 
-
-func check_filename(curr_filename: String) -> String:
-	var regex = RegEx.new();
-	regex.compile("^(\\d{4})_(\\d{2})_(\\d{2})");
-	var matches = regex.search(curr_filename);
-	if (matches):
-		return "devlog";
-	
-	return "";
+func get_edit_devlog():
+	return edit_devlog;
 
 
-func get_edit_ref():
-	return edit_button_ref;
-
-
-func set_edit_ref(updated):
-	edit_button_ref = updated;
-
+func clear_edit_devlog():
+	edit_devlog.clear();
 
 ## Update the directory given a filename and an action 
 ## action: String, "add_filename" / "delete_filename" 
