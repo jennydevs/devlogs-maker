@@ -36,9 +36,16 @@ func _on_get_devlogs():
 	clear_list();
 	
 	var request = Requests.new();
-	var error = request.create_get_devlogs_request(self);
-	if (error.has("error")):
-		create_error_popup.emit(error["error"], error["error_type"]);
+	var config = request.load_config();
+	if (!config is ConfigFile):
+		create_error_popup.emit(config["error"], config["error_type"]);
+		return;
+	
+	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
+	var result = request.get_file(self, "get_directory_devlogs", directory_path);
+	
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
 
 
 func _on_http_request_completed(result, response_code, _headers, body, action: String):
@@ -55,15 +62,13 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 	match response_code:
 		HTTPClient.RESPONSE_OK:
 			match action:
+				"get_directory_devlogs":
+					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
+					directory["sha"] = response["sha"];
+					setup_devlogs_from_directory(directory["data"]);
 				"get_directory":
 					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
 					directory["sha"] = response["sha"];
-				"get_devlogs":
-					for post in response:
-						if (post["name"] != "directory.txt"):
-							create_post_info(post["name"], post["download_url"], post["sha"]);
-						else: # remove directory, projects info from list
-							pass;
 				"get_devlog":
 					fill_out_devlog(body_str);
 				"delete_devlog":
@@ -149,6 +154,13 @@ func create_post_info(new_filename: String, url: String, sha: String):
 	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
 	
 	list.add_child(post_item);
+
+## Create the list of devlogs nodes using data from directory text
+func setup_devlogs_from_directory(directory_str: String) -> void:
+	var devlogs = directory_str.split("\n", false);
+	for devlog in devlogs:
+		create_post_info(devlog);
+
 
 ## Deletes the devlog nodes in the list.
 func clear_list():
