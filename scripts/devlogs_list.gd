@@ -113,28 +113,24 @@ func _on_edit_button_pressed(folder_name: String):
 		create_error_popup.emit(result["error"], result["error_type"]);
 
 
-func _on_delete_button_pressed(delete_entry_button: Button):
+func _on_delete_button_pressed(folder_name: String, post_item: Node):
 	create_action_popup.emit(
-		"Are you sure you want to delete this post?",
-		{ 'yes': "Delete Post", 'no': "Cancel" },
-		_on_serious_delete_button_pressed.bind(delete_entry_button) 
+		"Are you sure you want to delete this post?\nIf you're currently editing it, it will be cleared too.",
+		{ 'yes': "Delete devlog", 'no': "Cancel" },
+		_on_serious_delete_button_pressed.bind(folder_name) 
 	);
 
 
-func _on_serious_delete_button_pressed(delete_entry_button: Button):
+func _on_serious_delete_button_pressed(folder_name: String, post_item: Node):
 	var request = Requests.new();
 	var config = request.load_config();
 	if (!config is ConfigFile):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var button_ref = delete_entry_button;
-	var file_sha = button_ref.get_meta("sha");
-	var filename = button_ref.get_meta("name");
-	var result = request.delete_file(
-		self, "delete_devlog", 
-		config.get_value("repo_info", "content_path") + filename, file_sha
-	);
+	var devlog = devlogs[folder_name];
+	var devlog_path = config.get_value("repo_info", "content_path") + folder_name;
+	var result = request.delete_file(self, "delete_devlog", devlog_path, devlog["sha"]);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
@@ -142,10 +138,12 @@ func _on_serious_delete_button_pressed(delete_entry_button: Button):
 	await result["request_signal"];
 	await get_tree().create_timer(1.0).timeout;
 	
-	if (edit_button_ref && (button_ref.get_meta("sha") == edit_button_ref.get_meta("sha"))):
+	if (edit_devlog["sha"] == devlog["sha"]): # remove this or not...
 		clear_post.emit();
-	update_directory(filename, "delete_filename");
-	button_ref.get_parent().queue_free(); # delete entry in list
+	
+	update_directory(folder_name, "delete_dir");
+	devlogs.erase(folder_name);
+	post_item.queue_free();
 
 
 # =====================
@@ -164,7 +162,7 @@ func create_post_info(filename: String):
 	var edit_button = post_item.get_node("Edit");
 	edit_button.pressed.connect(_on_edit_button_pressed.bind(filename));
 	var delete_button = post_item.get_node("Delete");
-	delete_button.pressed.connect(_on_delete_button_pressed.bind(filename));
+	delete_button.pressed.connect(_on_delete_button_pressed.bind(filename, post_item));
 	
 	list.add_child(post_item);
 
