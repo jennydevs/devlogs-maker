@@ -6,18 +6,12 @@ var popup_ref = "res://scenes/components/popup_msg.tscn";
 func create_popup(msg: String, button_info: Dictionary, msg_type: AppInfo.MsgType):
 	var popup = load(popup_ref).instantiate();
 	add_child(popup);
-	
-	popup.create_popup(
-		msg,
-		button_info,
-		msg_type
-	);
+	popup.create_popup(msg, button_info, msg_type);
 
 
 func create_action_popup(msg: String, button_txt: Dictionary, action: Callable):
 	var popup = load(popup_ref).instantiate();
 	add_child(popup);
-	
 	popup.create_popup(
 		msg,
 		{
@@ -31,7 +25,6 @@ func create_action_popup(msg: String, button_txt: Dictionary, action: Callable):
 func create_notif_popup(msg: String):
 	var popup = load(popup_ref).instantiate();
 	add_child(popup);
-	
 	popup.create_popup(
 		msg,
 		{ 'yes': { "text": "Ok" } },
@@ -41,7 +34,6 @@ func create_notif_popup(msg: String):
 
 func create_error_popup(error_code: Error, error_type: AppInfo.ErrorType):
 	var error_msg = "%d\n" % error_code;
-	
 	match error_type:
 		AppInfo.ErrorType.ConfigError:
 			error_msg += "Failed to load config file.";
