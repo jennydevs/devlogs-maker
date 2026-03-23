@@ -11,6 +11,13 @@ extends MarginContainer
 # =====================
 
 var devlogs = {};
+
+var edit_devlog = {
+	"name": "",
+	"sha": "",
+	"decoded_content": ""
+};
+
 var directory = {
 	"name": "directory.txt",
 	"sha": "",
@@ -72,6 +79,11 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 								"git_url": entry["git_url"]
 							};
 					setup_devlogs_list();
+				"get_devlog_to_edit":
+					edit_devlog["name"] = response["name"];
+					edit_devlog["sha"] = response["sha"];
+					edit_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
+					fill_in_devlog();
 				"get_directory":
 					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
 					directory["sha"] = response["sha"];
@@ -87,17 +99,18 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 		create_notif_popup.emit(msg);
 
 
-func _on_edit_button_pressed(button: Button):
+func _on_edit_button_pressed(folder_name: String):
 	var request = Requests.new();
-	var result = request.get_file(
-		self, "get_devlog", "", button.get_meta("url"), Requests.AcceptType.Text
-	); # TODO check accept header
+	var config = request.load_config();
+	if (!config is ConfigFile):
+		create_error_popup.emit(config["error"], config["error_type"]);
+		return;
+	
+	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
+	var result = request.get_files(self, "get_devlog_to_edit", devlog_path);
 	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
-		edit_button_ref = null;
-	else:
-		edit_button_ref = button;
 
 
 func _on_delete_button_pressed(delete_entry_button: Button):
