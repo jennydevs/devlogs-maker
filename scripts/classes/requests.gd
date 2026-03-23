@@ -231,7 +231,6 @@ func create_update_file(
 ## file_data: Dictionary { "sha": String }
 func delete_file(scene: Node, action: String, delete_path: String, file_sha: String):
 	var config = load_config();
-	
 	if (!config is ConfigFile): return config;
 	
 	var body_str = create_commit_body(config, "Deleted devlog!", { "sha": file_sha });
@@ -251,15 +250,12 @@ func delete_file(scene: Node, action: String, delete_path: String, file_sha: Str
 	);
 
 
-## Get the reference (branch) commit sha
+## Get reference (branch) commit sha
 func get_ref(scene: Node):
 	var config = load_config();
+	if (!config is ConfigFile): return config;
 	
-	if (typeof(config) == TYPE_DICTIONARY): # change to ( ! is ConfigFile)
-		return config;
-	
-	var headers = create_headers(config, AcceptType.GitJSON, RequestType.GetData, {});
-	
+	var headers = create_headers(config, AcceptType.GitJSON, RequestType.GetData);
 	var url = "https://api.github.com/repos/%s/%s/git/ref/heads/%s" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
@@ -273,23 +269,19 @@ func get_ref(scene: Node):
 
 
 ## Upload file to the repo as a blob. This can be used as a part of a tree.
-## File must be encoded already to base64
-func create_blob(scene: Node, content: String):
+## File must be encoded to base64
+func create_blob(scene: Node, base64_content: String):
 	var config = load_config();
-	
-	if (typeof(config) == TYPE_DICTIONARY): # change to ( ! is ConfigFile)
-		return config;
+	if (!config is ConfigFile): return config;
 	
 	var body_str = JSON.stringify({
-		"content": content,
+		"content": base64_content,
 		"encoding": "base64"
 	});
-	
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData, 
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/git/blobs" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
@@ -303,20 +295,13 @@ func create_blob(scene: Node, content: String):
 
 func create_tree(scene: Node, head_ref_sha: String, tree_data: Array):
 	var config = load_config();
+	if (!config is ConfigFile): return config;
 	
-	if (!config is ConfigFile):
-		return config;
-	
-	var body_str = JSON.stringify({
-		"tree": tree_data,
-		"base_tree": head_ref_sha
-	});
-	
+	var body_str = JSON.stringify({ "tree": tree_data, "base_tree": head_ref_sha });
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData, 
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/git/trees" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
@@ -330,9 +315,7 @@ func create_tree(scene: Node, head_ref_sha: String, tree_data: Array):
 
 func create_commit(scene: Node, msg: String, parents: Array[String], tree_ref_sha: String):
 	var config = load_config();
-	
-	if (!config is ConfigFile):
-		return config;
+	if (!config is ConfigFile): return config;
 	
 	var body_str = JSON.stringify({
 		"message": msg,
@@ -343,12 +326,10 @@ func create_commit(scene: Node, msg: String, parents: Array[String], tree_ref_sh
 			"email": config.get_value("user_info", "user_email"),
 		}
 	});
-	
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData,
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/git/commits" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name")
@@ -363,19 +344,16 @@ func create_commit(scene: Node, msg: String, parents: Array[String], tree_ref_sh
 func update_ref(scene: Node, commit_ref: String):
 	var config = load_config();
 	
-	if (!config is ConfigFile):
-		return config;
+	if (!config is ConfigFile): return config;
 	
 	var body_str = JSON.stringify({
 		"sha": commit_ref,
 		"force": false
 	});
-	
 	var headers = create_headers(
 		config, AcceptType.GitJSON, RequestType.SendData, 
 		{ "body_length": str(body_str.length()) }
 	);
-	
 	var url = "https://api.github.com/repos/%s/%s/git/refs/heads/%s" % [
 		config.get_value("repo_info", "repo_owner"),
 		config.get_value("repo_info", "repo_name"),
@@ -391,15 +369,12 @@ func update_ref(scene: Node, commit_ref: String):
 ## user code to verify device, NOT user token for api requests
 func create_generate_user_code_request(scene: Node):
 	var config = load_config();
-	
-	if (typeof(config) == TYPE_DICTIONARY):
-		return config;
+	if (typeof(config) == TYPE_DICTIONARY): return config;
 	
 	var queries = create_queries({ "client_id": config.get_value("app_info", "app_client_id") });
 	var headers = create_headers(config, AcceptType.GitJSON, RequestType.SendURLData, 
 		{ "body_length": str(queries.length()) }
 	);
-	
 	var url = config.get_value("urls", "ask_for_user_code");
 	
 	return make_http_request(
@@ -410,14 +385,10 @@ func create_generate_user_code_request(scene: Node):
 
 func create_poll_verification_request(scene: Node, refresh_code: bool, device_code):
 	var config = load_config();
-	
-	if (typeof(config) == TYPE_DICTIONARY):
-		return config;
+	if (typeof(config) == TYPE_DICTIONARY): return config;
 	
 	# client secret not needed since using device flow
-	var fields = { 
-		"client_id": config.get_value("app_info", "app_client_id"),
-	};
+	var fields = { "client_id": config.get_value("app_info", "app_client_id") };
 	
 	if (refresh_code):
 		fields["grant_type"] = "refresh_token";
@@ -431,7 +402,6 @@ func create_poll_verification_request(scene: Node, refresh_code: bool, device_co
 		config, AcceptType.GitJSON, RequestType.SendURLData,
 		{ "body_length": str(queries.length()) }
 	);
-	
 	var url = config.get_value("urls", "poll_for_user_verify");
 	
 	return make_http_request(
