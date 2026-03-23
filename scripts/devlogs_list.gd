@@ -197,8 +197,8 @@ func set_edit_ref(updated):
 	edit_button_ref = updated;
 
 
-## filename: String, full name, to add/delete to the directory.
-## action: String, either "add_filename" OR "delete_filename" 
+## Update the directory given a filename and an action 
+## action: String, "add_filename" / "delete_filename" 
 func update_directory(filename: String, action: String):
 	var request = Requests.new();
 	var config = request.load_config();
@@ -206,42 +206,33 @@ func update_directory(filename: String, action: String):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	## Get directory for editing
-	var result = request.get_file(
-		self, "get_directory", 
-		config.get_value("repo_info", "content_path") + directory["name"]
-	);
-	if (result.has("error")):
-		create_error_popup.emit(result["error"], result["error_type"]);
-		return;
-	
-	await result["request_signal"];
+	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
+	var result = null;
+	if (directory["data"] == ""): # didn't get directory yet, else follow local dir data
+		result = request.get_file(self, "get_directory", directory_path);
+		if (result.has("error")):
+			create_error_popup.emit(result["error"], result["error_type"]);
+			return;
+		
+		await result["request_signal"];
 	
 	var commit_data = { "sha": directory["sha"] };
 	var update_content = directory["data"];
-	# TODO (REDO) use updated ver. of the directory in case of getting old data
 	var trimmed_filename = filename.trim_suffix("." + filename.get_extension());
 	
 	if (action == "add_filename"):
 		update_content = trimmed_filename + "\n" + directory["data"];
-		commit_data["msg"] = "Added filename to directory!";
+		commit_data["msg"] = "Add devlog to directory!";
 	elif (action == "delete_filename"):
 		var index = directory["data"].find(trimmed_filename);
-		if (index == -1):
-			return;
-		update_content = directory["data"].erase(
-			index, trimmed_filename.length() + 1 # include newline
-		);
-		commit_data["msg"] = "Deleted filename from directory!";
+		if (index == -1): return;
+		update_content = directory["data"].erase(index, trimmed_filename.length() + 1); # + '\n'
+		commit_data["msg"] = "Delete devlog from directory!";
 	
 	commit_data["content"] = update_content;
 	
-	# Update directory with the modified content
-	result = request.create_update_file(
-		self, "edit_directory", 
-		config.get_value("repo_info", "content_path") + directory["name"], 
-		commit_data
-	);
+	# Update directory with modified content
+	result = request.create_update_file(self, "edit_directory", directory_path, commit_data);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
