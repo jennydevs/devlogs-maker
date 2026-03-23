@@ -188,35 +188,28 @@ func create_get_devlogs_request(scene: Node):
 	return get_file(scene, "get_devlogs", url);
 
 
-## Must have EITHER [path to file] OR [full download url]
-## Can request for a single file or a list of files at a directory
+## Can request for a single file or a list of files at a directory using relative or full path
 func get_file(
-	scene: Node, action: String, 
-	path: String = "", download_url: String = "", accept_file_type: AcceptType = AcceptType.GitJSON
+	scene: Node, action: String, download_path: String, full_path: bool, 
+	accept_file_type: AcceptType = AcceptType.GitJSON
 ):
-	var config = load_config();
-	
-	if (!config is ConfigFile):
-		return config;
+	var config = load_config(); 
+	if (!config is ConfigFile): return config;
 	
 	var headers = create_headers(config, accept_file_type, RequestType.GetData);
 	
-	var url = "";
-	if (path != ""): # for files at repo only
+	var url = download_path;
+	if (!full_path): # relative path from the repository given
 		url = "https://api.github.com/repos/%s/%s/contents/%s" % [
 			config.get_value("repo_info", "repo_owner"),
 			config.get_value("repo_info", "repo_name"),
-			path
+			download_path
 		];
 		
 		var fields = { "ref": config.get_value("repo_info", "repo_branch_update") };
 		var queries = create_queries(fields);
-		# ex. '/' ends redirects to files in main dir instead of files in curr dir
+		# ex. '/' ending redirects to files in main dir instead of files in curr dir
 		url = url.rstrip("/") + "?" + queries; 
-	else: # for any file
-		url = download_url;
-	
-	# TODO Add warning for giving no urls
 	
 	return make_http_request(
 		scene, scene._on_http_request_completed.bind(action), 
