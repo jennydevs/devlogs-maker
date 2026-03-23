@@ -1,6 +1,5 @@
 class_name Requests
 
-
 enum RequestType {
 	SendData,
 	GetData,
@@ -27,7 +26,6 @@ func make_http_request(
 	h_client.request_completed.connect(callable);
 	
 	var error = h_client.request(url, headers, method, request_data);
-	
 	if (error != OK): return { "error": error, "error_type": AppInfo.ErrorType.HTTPError };
 	
 	return { "request_signal": h_client.request_completed };
@@ -75,7 +73,7 @@ func create_headers(
 		AcceptType.Raw:
 			accept = "application/vnd.github.raw+json";
 		_:
-			accept = "application/vnd.github+json"; # default
+			accept = "application/vnd.github+json";
 	
 	var headers = [
 		"User-Agent: " + app_name,
@@ -176,7 +174,7 @@ func load_config():
 # =====================
 
 ## Get a single file or a list of files at a directory
-func get_file(
+func get_files(
 	scene: Node, action: String, download_path: String, accept_file_type: AcceptType = AcceptType.GitJSON
 ):
 	var config = load_config(); 
