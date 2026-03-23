@@ -7,6 +7,17 @@ extends MarginContainer
 @onready var list = $ScrollContainer/List;
 
 # =====================
+# ===== Variables =====
+# =====================
+
+var edit_button_ref = null;
+var directory = {
+	"name": "directory.txt",
+	"sha": "",
+	"data": "",
+};
+
+# =====================
 # ====== Signals ======
 # =====================
 
@@ -17,16 +28,9 @@ signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 signal create_action_popup(msg, button_info, action);
 
-# =====================
-# ===== Variables =====
-# =====================
-
-var edit_button_ref = null;
-var directory = {
-	"name": "directory.txt",
-	"sha": "",
-	"data": "",
-};
+# ============================
+# ====== Signal Methods ======
+# ============================
 
 
 func startup():
