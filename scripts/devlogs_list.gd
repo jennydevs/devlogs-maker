@@ -32,39 +32,6 @@ signal create_action_popup(msg, button_info, action);
 # ====== Signal Methods ======
 # ============================
 
-
-func startup():
-	connect_startup.emit("devlogs_list");
-
-
-func create_post_info(new_filename: String, url: String, sha: String):
-	var post_item = load("res://scenes/components/post_item.tscn").instantiate();
-	
-	post_item.get_node("Filename").text = new_filename;
-	
-	var edit_button = post_item.get_node("Edit");
-	edit_button.set_meta("url", url);
-	edit_button.set_meta("sha", sha);
-	edit_button.set_meta("name", new_filename);
-	edit_button.pressed.connect(_on_edit_button_pressed.bind(edit_button));
-	
-	var delete_button = post_item.get_node("Delete");
-	delete_button.set_meta("name", new_filename);
-	delete_button.set_meta("sha", sha);
-	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
-	
-	list.add_child(post_item);
-
-
-func clear_list():
-	var amt_of_children = list.get_child_count();
-	if (amt_of_children > 1):
-		var children = list.get_children();
-		for i in range(amt_of_children - 1, 0, -1):
-			list.remove_child(children[i]);
-			children[i].queue_free();
-
-
 func _on_get_devlogs():
 	clear_list();
 	
@@ -122,25 +89,6 @@ func _on_edit_button_pressed(button: Button):
 		edit_button_ref = button;
 
 
-func fill_out_devlog(text: String):
-	var curr_filename = edit_button_ref.get_meta("name");
-	if (check_filename(curr_filename) == "devlog"):
-		var split_text = text.rsplit("\n");
-		var post_data = {
-			"filename": curr_filename, "creation_date": split_text[1],
-			"post_title": split_text[2], "post_summary": split_text[3]
-		};
-		
-		var str_len = 0;
-		for i in range(4): # get the start of the text body
-			str_len += split_text[i].length();
-		post_data["post_body"] = text.substr(str_len + 4, -1); # 4 of \n
-		
-		fill_in_details.emit(post_data);
-	else:
-		create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
-
-
 func _on_delete_button_pressed(delete_entry_button: Button):
 	create_action_popup.emit(
 		"Are you sure you want to delete this post?",
@@ -174,6 +122,61 @@ func _on_serious_delete_button_pressed(delete_entry_button: Button):
 		clear_post.emit();
 	update_directory(filename, "delete_filename");
 	button_ref.get_parent().queue_free(); # delete entry in list
+
+
+# =====================
+# ====== Methods ======
+# =====================
+
+func startup():
+	connect_startup.emit("devlogs_list");
+
+## Create and add data to the visual representation of each devlog.
+func create_post_info(new_filename: String, url: String, sha: String):
+	var post_item = load("res://scenes/components/post_item.tscn").instantiate();
+	
+	post_item.get_node("Filename").text = new_filename;
+	
+	var edit_button = post_item.get_node("Edit");
+	edit_button.set_meta("url", url);
+	edit_button.set_meta("sha", sha);
+	edit_button.set_meta("name", new_filename);
+	edit_button.pressed.connect(_on_edit_button_pressed.bind(edit_button));
+	
+	var delete_button = post_item.get_node("Delete");
+	delete_button.set_meta("name", new_filename);
+	delete_button.set_meta("sha", sha);
+	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
+	
+	list.add_child(post_item);
+
+## Deletes the devlog nodes in the list.
+func clear_list():
+	var amt_of_children = list.get_child_count();
+	if (amt_of_children > 1): # tthere is more than just the title
+		var children = list.get_children();
+		for i in range(amt_of_children - 1, 0, -1):
+			list.remove_child(children[i]);
+			children[i].queue_free();
+
+
+func fill_out_devlog(text: String):
+	var curr_filename = edit_button_ref.get_meta("name");
+	if (check_filename(curr_filename) == "devlog"):
+		var split_text = text.rsplit("\n");
+		var post_data = {
+			"filename": curr_filename, "creation_date": split_text[1],
+			"post_title": split_text[2], "post_summary": split_text[3]
+		};
+		
+		var str_len = 0;
+		for i in range(4): # get the start of the text body
+			str_len += split_text[i].length();
+		post_data["post_body"] = text.substr(str_len + 4, -1); # 4 of \n
+		
+		fill_in_details.emit(post_data);
+	else:
+		create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
 
 
 func check_filename(curr_filename: String) -> String:
