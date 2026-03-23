@@ -137,21 +137,15 @@ func startup():
 	connect_startup.emit("devlogs_list");
 
 ## Create and add data to the visual representation of each devlog.
-func create_post_info(new_filename: String, url: String, sha: String):
+func create_post_info(filename: String):
 	var post_item = load("res://scenes/components/post_item.tscn").instantiate();
 	
-	post_item.get_node("Filename").text = new_filename;
+	post_item.get_node("Filename").text = filename;
 	
 	var edit_button = post_item.get_node("Edit");
-	edit_button.set_meta("url", url);
-	edit_button.set_meta("sha", sha);
-	edit_button.set_meta("name", new_filename);
-	edit_button.pressed.connect(_on_edit_button_pressed.bind(edit_button));
-	
+	edit_button.pressed.connect(_on_edit_button_pressed.bind(filename));
 	var delete_button = post_item.get_node("Delete");
-	delete_button.set_meta("name", new_filename);
-	delete_button.set_meta("sha", sha);
-	delete_button.pressed.connect(_on_delete_button_pressed.bind(delete_button));
+	delete_button.pressed.connect(_on_delete_button_pressed.bind(filename));
 	
 	list.add_child(post_item);
 
