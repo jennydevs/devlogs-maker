@@ -10,7 +10,7 @@ extends MarginContainer
 # ===== Variables =====
 # =====================
 
-var edit_button_ref = null;
+var devlogs = {};
 var directory = {
 	"name": "directory.txt",
 	"sha": "",
@@ -41,8 +41,8 @@ func _on_get_devlogs():
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
-	var result = request.get_file(self, "get_directory_devlogs", directory_path);
+	var devlogs_path = config.get_value("repo_info", "content_path");
+	var result = request.get_files(self, "get_devlog_files", devlogs_path);
 	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -62,10 +62,16 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 	match response_code:
 		HTTPClient.RESPONSE_OK:
 			match action:
-				"get_directory_devlogs":
-					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
-					directory["sha"] = response["sha"];
-					setup_devlogs_from_directory(directory["data"]);
+				"get_devlogs_files":
+					devlogs.clear();
+					for entry in response:
+						if (entry["type"] == "dir"):
+							devlogs[entry["name"]] = { 
+								"path": entry["path"],
+								"sha": entry["sha"],
+								"git_url": entry["git_url"]
+							};
+					setup_devlogs_list();
 				"get_directory":
 					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
 					directory["sha"] = response["sha"];
@@ -149,10 +155,10 @@ func create_post_info(filename: String):
 	
 	list.add_child(post_item);
 
-## Create the list of devlogs nodes using data from directory text
-func setup_devlogs_from_directory(directory_str: String) -> void:
-	var devlogs = directory_str.split("\n", false);
-	for devlog in devlogs:
+## Create the list of devlogs nodes given the name of each devlog.
+func setup_devlogs_list():
+	var devlog_names = devlogs.keys();
+	for devlog_name in devlog_names:
 		create_post_info(devlog);
 
 
