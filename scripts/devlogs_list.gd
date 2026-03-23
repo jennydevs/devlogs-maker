@@ -178,23 +178,24 @@ func clear_list():
 			children[i].queue_free();
 
 
-func fill_out_devlog(text: String):
-	var curr_filename = edit_button_ref.get_meta("name");
-	if (check_filename(curr_filename) == "devlog"):
-		var split_text = text.rsplit("\n");
-		var post_data = {
-			"filename": curr_filename, "creation_date": split_text[1],
-			"post_title": split_text[2], "post_summary": split_text[3]
-		};
-		
-		var str_len = 0;
-		for i in range(4): # get the start of the text body
-			str_len += split_text[i].length();
-		post_data["post_body"] = text.substr(str_len + 4, -1); # 4 of \n
-		
-		fill_in_details.emit(post_data);
-	else:
-		create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
+func fill_in_devlog():
+	var devlog_name = edit_devlog["name"];
+	var whole_devlog = edit_devlog["decoded_content"];
+	var text_chunks = whole_devlog.rsplit("\n");
+	var post_data = {
+		"filename": edit_devlog["name"], "creation_date": text_chunks[1],
+		"post_title": text_chunks[2], "post_summary": text_chunks[3]
+	};
+	
+	var str_len = 0;
+	for i in range(4): # get the start of the text body in character length
+		str_len += text_chunks[i].length();
+	post_data["post_body"] = whole_devlog.substr(str_len + 4, -1); # 4 of '\n' included
+	
+	fill_in_details.emit(post_data);
+	
+	#create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
+
 
 
 func check_filename(curr_filename: String) -> String:
