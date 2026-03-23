@@ -177,17 +177,6 @@ func load_config():
 # == Custom Requests == # deals with unique urls, queries, actions
 # =====================
 
-func create_get_devlogs_request(scene: Node):
-	var config = load_config();
-	
-	if (!config is ConfigFile):
-		return config;
-	
-	var url = config.get_value("repo_info", "content_path");
-	
-	return get_file(scene, "get_devlogs", url);
-
-
 ## Can request for a single file or a list of files at a directory using relative or full path
 func get_file(
 	scene: Node, action: String, download_path: String, full_path: bool, 
