@@ -175,28 +175,23 @@ func load_config():
 # == Custom Requests == # deals with unique urls, queries, actions
 # =====================
 
-## Can request for a single file or a list of files at a directory using relative or full path
+## Get a single file or a list of files at a directory
 func get_file(
-	scene: Node, action: String, download_path: String, full_path: bool, 
-	accept_file_type: AcceptType = AcceptType.GitJSON
+	scene: Node, action: String, download_path: String, accept_file_type: AcceptType = AcceptType.GitJSON
 ):
 	var config = load_config(); 
 	if (!config is ConfigFile): return config;
 	
 	var headers = create_headers(config, accept_file_type, RequestType.GetData);
-	
-	var url = download_path;
-	if (!full_path): # relative path from the repository given
-		url = "https://api.github.com/repos/%s/%s/contents/%s" % [
-			config.get_value("repo_info", "repo_owner"),
-			config.get_value("repo_info", "repo_name"),
-			download_path
-		];
-		
-		var fields = { "ref": config.get_value("repo_info", "repo_branch_update") };
-		var queries = create_queries(fields);
-		# ex. '/' ending redirects to files in main dir instead of files in curr dir
-		url = url.rstrip("/") + "?" + queries; 
+	var url = "https://api.github.com/repos/%s/%s/contents/%s" % [
+		config.get_value("repo_info", "repo_owner"),
+		config.get_value("repo_info", "repo_name"),
+		download_path
+	];
+	var fields = { "ref": config.get_value("repo_info", "repo_branch_update") };
+	var queries = create_queries(fields);
+	# ex. '/' ending redirects to files in main dir instead of files in curr dir
+	url = url.rstrip("/") + "?" + queries; 
 	
 	return make_http_request(
 		scene, scene._on_http_request_completed.bind(action), 
