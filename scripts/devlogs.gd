@@ -58,8 +58,6 @@ func setup_assets_folder():
 	if (!dir_access.dir_exists("assets")):
 		return dir_access.make_dir("assets");
 
-
-
 # ==========================
 # ===== Signal Methods =====
 # ==========================
@@ -71,43 +69,41 @@ func _on_post_curr_text():
 	
 	var request = Requests.new();
 	var config = request.load_config();
-	
 	if (!config is ConfigFile):
 		create_error_popup.emit(config["error"], config["error_type"]);
 	
 	# Start preparing the data for post/editing
-	var data = {
-		"action_type": "post_devlog",
-		"commit_msg": "Posted devlog.",
-		"files": [],
-	};
+	var data = { "action_type": "post_devlog", "commit_msg": "Post devlog.", "files": [] };
 	
 	# Replace messages if editing a devlog
-	var edit_ref = post_list.get_edit_ref();
-	if (edit_ref):
+	var edit_devlog = post_list.get_edit_devlog();
+	if (edit_devlog.has("sha")):
 		data["action_type"] = "edit_devlog";
-		data["sha"] = edit_ref.get_meta("sha");
-		data["commit_msg"] = "Edited devlog.";
+		data["sha"] = edit_devlog["sha"];
+		data["commit_msg"] = "Edit devlog.";
+	
+	var upload_location = config.get_value("repo_info", "content_path");
+	var filename = finalize.get_filename();
+	var folder_name = filename.trim_suffix("." + filename.get_extension());
+	upload_location = upload_location + folder_name + "/";
 	
 	# The plain text content
 	data["files"].append({
 		"content": Marshalls.utf8_to_base64(text_preview.get_text()),
-		"path": config.get_value("repo_info", "content_path") + finalize.get_filename(),
-		"mode": "100644", # file blob
-		"type": "blob",
+		"path": upload_location + filename, # location of file in repository
+		"mode": "100644", "type": "blob" # file blob
 	});
 	
-	# Image(s) data encoded in base64
-	var imgs: Array[String] = text_preview.process_post_for_imgs(images.img_list);
+	# Image(s) data to encode in base64
+	var imgs: Array[String] = text_preview.process_post_for_imgs(images);
 	for img_path in imgs:
 		var img_data = Image.new();
-		img_data.load("user://assets/%s" % img_path);
+		img_data.load(img_path);
 		var encoded_bytes = Marshalls.raw_to_base64(img_data.save_png_to_buffer());
 		data["files"].append({
 			"content": encoded_bytes,
-			"path": img_path, # location of file in repository
-			"mode": "100644", # file blob
-			"type": "blob"
+			"path": upload_location + "images/" + img_path.get_file(),
+			"mode": "100644", "type": "blob" 
 		});
 	
 	# Get the reference to the branch the changes will be committed to
@@ -170,14 +166,16 @@ func _on_post_curr_text():
 	
 	# TODO update SHA and add post info as before SHA unicode for null  ('\0') is not usable in Godot
 	
-	if (edit_ref): # edited post, dir stays the same
+	if (edit_devlog.has("sha")): # edited post, dir stays the same
 		#edit_ref.set_meta("sha", response["content"]["sha"]);
-		clear_post();
+		pass;
 	else: # new post, update dir, visuals
 		#var info = response["content"];
 		#post_list.create_post_info(["name"], info["download_url"], info["sha"]);
-		post_list.update_directory(finalize.get_filename(), "add_filename");
-		clear_post();
+		#post_list.create_post_info
+		post_list.update_directory(folder_name, "add_filename");
+	
+	clear_post();
 
 
 func _on_text_changed_preview(_new_text: String) -> void:
@@ -275,11 +273,9 @@ func update_preview():
 	});
 
 
-
 # ============================
 # ===== Helper Functions =====
 # ============================
-
 
 
 func get_curr_formatted_date():
