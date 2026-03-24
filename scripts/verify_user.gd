@@ -4,7 +4,6 @@ signal connect_startup(component: String);
 signal user_token_expired;
 signal refresh_token_expired;
 signal enable_buttons;
-
 signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 

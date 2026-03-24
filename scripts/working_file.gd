@@ -80,7 +80,7 @@ func _on_file_selected(path: String):
 				img.save_jpg(save_path, 1.0);
 			"png":
 				img.save_png(save_path);
-	
+		
 		tex.set_image(img);
 		
 		add_to_image_list.emit(tex, save_path);

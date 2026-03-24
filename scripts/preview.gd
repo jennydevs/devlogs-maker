@@ -43,7 +43,7 @@ func process_post(post_data: Dictionary, img_list):
 	post_preview.pop();
 	post_preview.add_text(post_data["edit_date"]);
 	post_preview.push_italics();
-	post_preview.add_text("/ Created: ");
+	post_preview.add_text("- Created: ");
 	post_preview.pop();
 	post_preview.add_text(post_data["creation_date"]);
 	post_preview.newline();

@@ -30,7 +30,6 @@ func make_http_request(
 	
 	return { "request_signal": h_client.request_completed };
 
-
 ## addt_data: Dictionary {
 ## content: String / OPTIONAL
 ## sha: String / OPTIONAL
