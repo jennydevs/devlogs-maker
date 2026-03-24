@@ -165,6 +165,76 @@ func _on_update_tree():
 	
 	clear_post();
 
+
+func _on_delete_tree(delete_devlog_info: Dictionary):
+	var request = Requests.new();
+	var config = request.load_config();
+	if (!config is ConfigFile):
+		create_error_popup.emit(config["error"], config["error_type"]);
+		return;
+	
+	# Start preparing the data for post/editing
+	var data = { "commit_msg": "Delete devlog.", "files": [] };
+	
+	var folder_name = delete_devlog_info["folder_name"];
+	var upload_location = config.get_value("repo_info", "content_path") + folder_name + "/";
+	var filename = folder_name + ".txt";
+	
+	# The text file to delete
+	data["files"].append({ "sha": null, "path": upload_location + filename, "mode": "100644", "type": "blob" });
+	
+	# Images to delete related to the devlog
+	var imgs: Array[String] = text_preview.get_img_lines(delete_devlog_info["decoded_content"]);
+	for img_path in imgs:
+		data["files"].append({
+			"sha": null,
+			"path": upload_location + "images/" + img_path.get_file(),
+			"mode": "100644", "type": "blob" 
+		});
+	
+	# Get the reference to the branch the changes will be committed to
+	var result = request.get_ref(self);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"]; # make sure ref is collected
+	
+	var head_ref_sha = branch_ref;
+	branch_ref = "";
+	
+	result = await request.create_tree(self, head_ref_sha, data["files"]);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout; # for secondary rate limit
+	
+	var new_tree_sha = tree_sha;
+	tree_sha = "";
+	result = await request.create_commit(self, data["commit_msg"], [head_ref_sha], new_tree_sha);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout;
+	
+	var new_commit_sha = commit_sha;
+	commit_sha = "";
+	result = await request.update_ref(self, new_commit_sha);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout;
+	
+	post_list.update_directory(folder_name, "delete_dir");
+	delete_devlog_info.clear();
+
+
 func _on_text_changed_preview(_new_text: String) -> void:
 	update_preview();
 
@@ -315,3 +385,4 @@ func _on_connect_startup(component: String):
 		"devlogs_list":
 			post_list.clear_post.connect(clear_post);
 			post_list.fill_in_details.connect(fill_in_details);
+			post_list.delete_a_devlog.connect(_on_delete_tree);

@@ -12,7 +12,7 @@ extends MarginContainer
 
 var devlogs = {};
 var edit_devlog = {}; #"name": "", "sha": "", "decoded_content": ""
-
+var delete_devlog = {}; # "decoded_content", "folder_name": ""
 var directory = { "name": "directory.txt", "sha": "", "data": "" };
 
 # =====================
@@ -22,6 +22,7 @@ var directory = { "name": "directory.txt", "sha": "", "data": "" };
 signal connect_startup(component: String);
 signal clear_post;
 signal fill_in_details(post_info: Dictionary);
+signal delete_a_devlog(delete_devlog: Dictionary);
 signal create_error_popup(error, error_type);
 signal create_notif_popup(msg);
 signal create_action_popup(msg, button_info, action);
@@ -74,6 +75,8 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 				"get_directory":
 					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
 					directory["sha"] = response["sha"];
+				"get_devlog_to_delete":
+					delete_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
 				_:
 					pass;
 		_:
@@ -97,37 +100,33 @@ func _on_edit_button_pressed(folder_name: String):
 		create_error_popup.emit(result["error"], result["error_type"]);
 
 
-func _on_delete_button_pressed(folder_name: String, post_item: Node):
+func _on_delete_button_pressed(folder_name: String):
 	create_action_popup.emit(
 		"Are you sure you want to delete this post?\nIf you're currently editing it, it will be cleared too.",
 		{ 'yes': "Delete devlog", 'no': "Cancel" },
-		_on_serious_delete_button_pressed.bind(folder_name, post_item) 
+		_on_serious_delete_button_pressed.bind(folder_name) 
 	);
 
 
-func _on_serious_delete_button_pressed(folder_name: String, post_item: Node):
+func _on_serious_delete_button_pressed(folder_name: String):
 	var request = Requests.new();
 	var config = request.load_config();
 	if (!config is ConfigFile):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var devlog = devlogs[folder_name];
-	var devlog_path = config.get_value("repo_info", "content_path") + folder_name;
-	var result = request.delete_file(self, "delete_devlog", devlog_path, devlog["sha"]);
+	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
+	var result = request.get_files(self, "get_devlog_to_delete", devlog_path);
+	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
+	 
+	delete_devlog["folder_name"] = folder_name;
 	
 	await result["request_signal"];
-	await get_tree().create_timer(1.0).timeout;
 	
-	if (edit_devlog["sha"] == devlog["sha"]): # remove this or not...
-		clear_post.emit();
-	
-	update_directory(folder_name, "delete_dir");
-	devlogs.erase(folder_name);
-	post_item.queue_free();
+	delete_a_devlog.emit(delete_devlog);
 
 
 # =====================
@@ -146,7 +145,7 @@ func create_post_info(filename: String):
 	var edit_button = post_item.get_node("Edit");
 	edit_button.pressed.connect(_on_edit_button_pressed.bind(filename));
 	var delete_button = post_item.get_node("Delete");
-	delete_button.pressed.connect(_on_delete_button_pressed.bind(filename, post_item));
+	delete_button.pressed.connect(_on_delete_button_pressed.bind(filename));
 	
 	list.add_child(post_item);
 
@@ -218,7 +217,7 @@ func update_directory(folder_name: String, action: String):
 	if (action == "add_filename"):
 		update_content = trimmed_folder_name + "\n" + directory["data"];
 		commit_data["msg"] = "Add devlog to directory.";
-	elif (action == "delete_filename"):
+	elif (action == "delete_dir"):
 		var index = directory["data"].find(trimmed_folder_name);
 		if (index == -1): return;
 		update_content = directory["data"].erase(index, trimmed_folder_name.length() + 1); # + '\n'
