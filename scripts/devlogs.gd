@@ -62,7 +62,7 @@ func setup_assets_folder():
 # ===== Signal Methods =====
 # ==========================
 
-func _on_post_curr_text():
+func _on_update_tree():
 	if (finalize.text_is_empty() || editor.text_is_empty()):
 		create_notif_popup.emit("You haven't completed all parts of your post yet!");
 		return;
@@ -295,7 +295,7 @@ func _on_connect_startup(component: String):
 	match component:
 		"menu_options":
 			menu_options.get_devlogs.connect(post_list._on_get_devlogs);
-			menu_options.post_curr_text.connect(_on_post_curr_text);
+			menu_options.post_curr_text.connect(_on_update_tree);
 			menu_options.clear_text.connect(_on_clear_text);
 			menu_options.import_image_file.connect(file_dialog.import_image);
 			menu_options.import_file.connect(file_dialog.import_file);
