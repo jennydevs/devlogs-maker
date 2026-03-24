@@ -202,14 +202,12 @@ func update_directory(folder_name: String, action: String):
 		return;
 	
 	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
-	var result = null;
-	if (directory["data"] == ""): # didn't get directory yet, else follow local dir data
-		result = request.get_files(self, "get_directory", directory_path);
-		if (result.has("error")):
-			create_error_popup.emit(result["error"], result["error_type"]);
-			return;
-		
-		await result["request_signal"];
+	var result = request.get_files(self, "get_directory", directory_path);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
 	
 	var commit_data = { "sha": directory["sha"] };
 	var update_content = directory["data"];
