@@ -73,12 +73,11 @@ func _on_post_curr_text():
 		create_error_popup.emit(config["error"], config["error_type"]);
 	
 	# Start preparing the data for post/editing
-	var data = { "action_type": "post_devlog", "commit_msg": "Post devlog.", "files": [] };
+	var data = { "commit_msg": "Post devlog.", "files": [] };
 	
 	# Replace messages if editing a devlog
 	var edit_devlog = post_list.get_edit_devlog();
 	if (edit_devlog.has("sha")):
-		data["action_type"] = "edit_devlog";
 		data["sha"] = edit_devlog["sha"];
 		data["commit_msg"] = "Edit devlog.";
 	
@@ -133,7 +132,6 @@ func _on_post_curr_text():
 		data["files"][i]["sha"] = file_shas[i];
 	
 	file_shas = [];
-	
 	result = await request.create_tree(self, head_ref_sha, data["files"]);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -144,7 +142,6 @@ func _on_post_curr_text():
 	
 	var new_tree_sha = tree_sha;
 	tree_sha = "";
-	
 	result = await request.create_commit(self, data["commit_msg"], [head_ref_sha], new_tree_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -155,7 +152,6 @@ func _on_post_curr_text():
 	
 	var new_commit_sha = commit_sha;
 	commit_sha = "";
-	
 	result = await request.update_ref(self, new_commit_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -164,19 +160,10 @@ func _on_post_curr_text():
 	await result["request_signal"];
 	await get_tree().create_timer(1.0).timeout;
 	
-	# TODO update SHA and add post info as before SHA unicode for null  ('\0') is not usable in Godot
-	
-	if (edit_devlog.has("sha")): # edited post, dir stays the same
-		#edit_ref.set_meta("sha", response["content"]["sha"]);
-		pass;
-	else: # new post, update dir, visuals
-		#var info = response["content"];
-		#post_list.create_post_info(["name"], info["download_url"], info["sha"]);
-		#post_list.create_post_info
+	if (!edit_devlog.has("sha")):
 		post_list.update_directory(folder_name, "add_filename");
 	
 	clear_post();
-
 
 func _on_text_changed_preview(_new_text: String) -> void:
 	update_preview();
@@ -197,28 +184,16 @@ func _on_http_request_completed(result, response_code, _headers, body, action):
 	match response_code:
 		HTTPClient.RESPONSE_OK: # update post
 			match action:
-				#"edit_devlog":
-					#var info = response["content"];
-					#var edit_ref = post_list.get_edit_ref();
-					#if (edit_ref != null):
-						#edit_ref.set_meta("sha", info["sha"]);
-						#post_list.set_edit_ref(null);
-						#clear_post();
 				"get_ref":
 					branch_ref = response["object"]["sha"];
 				"update_ref":
 					pass;
 		HTTPClient.RESPONSE_CREATED: # new post
 			match action:
-				#"post_devlog":
-					#var info = response["content"];
-					#post_list.create_post_info(info["name"], info["download_url"], info["sha"]);
-					#post_list.update_directory_file(info["name"], "add");
-					#clear_post();
 				"create_blob":
 					file_shas.append(response["sha"]); # only need sha of blob
 				"create_tree":
-					tree_sha = response["sha"];
+					tree_sha = response["sha"]; # main tree sha
 				"create_commit":
 					commit_sha = response["sha"];
 		_:

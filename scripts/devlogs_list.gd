@@ -13,11 +13,7 @@ extends MarginContainer
 var devlogs = {};
 var edit_devlog = {}; #"name": "", "sha": "", "decoded_content": ""
 
-var directory = {
-	"name": "directory.txt",
-	"sha": "",
-	"data": "",
-};
+var directory = { "name": "directory.txt", "sha": "", "data": "" };
 
 # =====================
 # ====== Signals ======
@@ -68,10 +64,7 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 					devlogs.clear();
 					for entry in response:
 						if (entry["type"] == "dir"):
-							devlogs[entry["name"]] = { 
-								"sha": entry["sha"],
-								"git_url": entry["git_url"]
-							};
+							devlogs[entry["name"]] = { "sha": entry["sha"], "git_url": entry["git_url"] };
 					setup_devlogs_list();
 				"get_devlog_to_edit":
 					edit_devlog["name"] = response["name"];
@@ -238,3 +231,8 @@ func update_directory(folder_name: String, action: String):
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout;
+	
+	_on_get_devlogs();
