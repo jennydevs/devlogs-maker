@@ -106,8 +106,8 @@ func get_image_texture(img_line: String, images):
 	return null;
 
 
-func process_post_for_imgs(img_list):
-	var post_lines = plain_text_post.split("\n", true);
+func get_img_lines(text: String):
+	var post_lines = text.split("\n", true);
 	
 	var imgs_in_devlog: Array[String] = [];
 	for line in post_lines:
@@ -115,6 +115,12 @@ func process_post_for_imgs(img_list):
 			var left_side = line.find("(");
 			var right_side = line.find(")");
 			imgs_in_devlog.append(line.substr(left_side + 1, right_side - left_side - 1));
+	
+	return imgs_in_devlog;
+
+
+func process_post_for_imgs(img_list):
+	var imgs_in_devlog: Array[String] = get_img_lines(plain_text_post);
 	
 	var file_paths = img_list.get_file_paths();
 	var filenames = img_list.get_filenames();
