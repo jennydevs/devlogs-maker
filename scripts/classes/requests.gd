@@ -106,9 +106,11 @@ func build_notif_msg(msg_type: String, response_code: int, body: String):
 	match response_code:
 		HTTPClient.RESPONSE_OK: # 200
 			match msg_type:
-				"update_ref":
+				"update_ref_upload":
 					msg = "Successfully uploaded devlog!"
-				"delete_file":
+				"update_ref_edit":
+					msg = "Successfully edited devlog!";
+				"update_ref_deletion":
 					msg = "Successfully deleted devlog!";
 				_:
 					msg = "";
@@ -338,7 +340,7 @@ func create_commit(scene: Node, msg: String, parents: Array[String], tree_ref_sh
 	);
 
 
-func update_ref(scene: Node, commit_ref: String):
+func update_ref(scene: Node, action: String, commit_ref: String):
 	var config = load_config();
 	
 	if (!config is ConfigFile): return config;
@@ -358,7 +360,7 @@ func update_ref(scene: Node, commit_ref: String):
 	];
 	
 	return make_http_request(
-		scene, scene._on_http_request_completed.bind("update_ref"), HTTPClient.METHOD_PATCH,
+		scene, scene._on_http_request_completed.bind(action), HTTPClient.METHOD_PATCH,
 		url, headers, body_str
 	);
 

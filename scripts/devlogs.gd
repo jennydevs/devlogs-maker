@@ -152,7 +152,8 @@ func _on_update_tree():
 	
 	var new_commit_sha = commit_sha;
 	commit_sha = "";
-	result = await request.update_ref(self, new_commit_sha);
+	var curr_action = "update_ref_upload" if !edit_devlog.has("sha") else "update_ref_edit";
+	result = await request.update_ref(self, curr_action, new_commit_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
@@ -223,7 +224,7 @@ func _on_delete_tree(delete_devlog_info: Dictionary):
 	
 	var new_commit_sha = commit_sha;
 	commit_sha = "";
-	result = await request.update_ref(self, new_commit_sha);
+	result = await request.update_ref(self, "update_ref_deletion", new_commit_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
