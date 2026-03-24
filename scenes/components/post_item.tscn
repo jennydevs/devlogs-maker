@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b6pthcskxncuq"]
+
+[node name="PostItem" type="HBoxContainer"]
+
+[node name="Filename" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Edit" type="Button" parent="."]
+layout_mode = 2
+text = "Edit"
+
+[node name="Delete" type="Button" parent="."]
+layout_mode = 2
+text = "Delete"

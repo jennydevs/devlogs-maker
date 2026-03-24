@@ -43,7 +43,7 @@ func process_post(post_data: Dictionary, img_list):
 	post_preview.pop();
 	post_preview.add_text(post_data["edit_date"]);
 	post_preview.push_italics();
-	post_preview.add_text("/ Created: ");
+	post_preview.add_text("- Created: ");
 	post_preview.pop();
 	post_preview.add_text(post_data["creation_date"]);
 	post_preview.newline();
@@ -58,7 +58,7 @@ func process_post(post_data: Dictionary, img_list):
 			post_preview.add_text(a_line);
 			post_preview.pop();
 			post_preview.newline();
-		elif (line.contains("![")): # image
+		elif (line.contains("![") && line.contains(")")): # image
 			var addt_txt = line.substr(0, line.find("!"));
 			var addt_end_txt = line.substr(line.find(")") + 1);
 			post_preview.add_text(addt_txt);
@@ -66,7 +66,7 @@ func process_post(post_data: Dictionary, img_list):
 			var tex = get_image_texture(line, img_list);
 			if (tex):
 				post_preview.push_paragraph(HORIZONTAL_ALIGNMENT_CENTER);
-				post_preview.add_image(tex, 128);
+				post_preview.add_image(tex, self.size.x * (0.75)); # width of box * size %
 				post_preview.pop();
 			
 			post_preview.add_text(addt_end_txt);
@@ -90,41 +90,49 @@ func process_post(post_data: Dictionary, img_list):
 		post_preview.newline();
 
 
-func get_image_texture(img_line: String, img_list):
+func get_image_texture(img_line: String, images):
 	var img_path = img_line.get_slice("(", 1);
 	var link_end = img_path.find(")");
-	img_path = img_path.substr(0, link_end); # if there are additional chars at the end
+	img_path = img_path.substr(0, link_end);
 	
-	var imgs = img_list.get_children();
-	for x in range(1, imgs.size(), 1): #ignoring title
-			var img_name = imgs[x].get_meta("file_path");
-			if (img_name.replace("public", "") == img_path):
-				var components = imgs[x].get_child(0).get_children(); # hbox holds all
-				for component in components:
-					if (component is TextureRect):
-						return component.texture;
+	var filenames = images.get_filenames();
+	var img_list = images.get_image_list();
+	
+	var found_img_index = filenames.find(img_path);
+	if (found_img_index != -1):
+		var image_item = img_list.get_child(found_img_index + 1); # +1 to skip title
+		return image_item.get_node("HB/Tex").texture;
 	
 	return null;
 
 
-func process_post_for_imgs(img_list):
-	var post_lines = plain_text_post.split("\n", true);
+func get_img_lines(text: String):
+	var post_lines = text.split("\n", true);
 	
-	var img_paths: Array[String] = [];
-	var imgs_to_send: Array[String] = [];
+	var imgs_in_devlog: Array[String] = [];
 	for line in post_lines:
-		if (line.contains("![")): # image
-			img_paths.append(line.substr(line.find("(") + 1, line.find(")") - line.find("(") - 1));
+		if (line.contains("![") && line.contains(")")): # image link in markdown format
+			var left_side = line.find("(");
+			var right_side = line.find(")");
+			imgs_in_devlog.append(line.substr(left_side + 1, right_side - left_side - 1));
 	
+	return imgs_in_devlog;
+
+
+func process_post_for_imgs(img_list):
+	var imgs_in_devlog: Array[String] = get_img_lines(plain_text_post);
+	
+	var file_paths = img_list.get_file_paths();
+	var filenames = img_list.get_filenames();
 	var dir_access = DirAccess.open("user://");
-	var imgs = img_list.get_children();
 	
-	for img_path in img_paths:
-		for x in range(1, imgs.size(), 1): #ignoring title
-			var img_name = imgs[x].get_meta("file_path");
-			if (img_name.replace("public", "") == img_path):
-				if (dir_access.file_exists("user://assets/" + img_name)):
-					imgs_to_send.append(img_name);
+	var imgs_to_send: Array[String] = [];
+	for img in imgs_in_devlog:
+		var found_img_index = filenames.find(img);
+		if (found_img_index != -1):
+			var img_path = file_paths[found_img_index];
+			if (dir_access.file_exists(img_path)):
+				imgs_to_send.append(img_path);
 	
 	return imgs_to_send;
 
@@ -133,10 +141,6 @@ func clear_text():
 	plain_text_post = "";
 	post_preview.text = "";
 
-
-# =====================
-# ====== Getters ======
-# =====================
 
 func get_text():
 	return plain_text_post;

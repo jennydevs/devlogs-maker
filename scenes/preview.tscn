@@ -11,6 +11,7 @@ script = ExtResource("1_ljlpc")
 metadata/_tab_index = 2
 
 [node name="PostPreview" type="RichTextLabel" parent="."]
+texture_filter = 1
 layout_mode = 2
 focus_mode = 2
 bbcode_enabled = true

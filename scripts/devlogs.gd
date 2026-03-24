@@ -32,72 +32,77 @@ var commit_sha: String = "";
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	var modules = [
-		menu_options, file_dialog, 
+		self, menu_options, file_dialog, 
 		images, post_list, 
 		settings, verify_user
 	];
-	
-	self.create_error_popup.connect(workspace_container.create_error_popup);
-	self.create_notif_popup.connect(workspace_container.create_notif_popup);
-	self.create_action_popup.connect(workspace_container.create_action_popup);
 	
 	editor.startup(update_preview);
 	finalize.startup(_on_text_changed_preview, update_preview);
 	
 	for module in modules:
+		if (module.has_signal("create_error_popup")):
+			module.create_error_popup.connect(workspace_container.create_error_popup);
+		if (module.has_signal("create_notif_popup")):
+			module.create_notif_popup.connect(workspace_container.create_notif_popup);
+		if (module.has_signal("create_action_popup")):
+			module.create_action_popup.connect(workspace_container.create_action_popup);
 		if (module.has_signal("connect_startup")):
 			module.connect_startup.connect(_on_connect_startup);
 			module.startup();
+	
+	setup_assets_folder();
 
+func setup_assets_folder():
+	var dir_access = DirAccess.open("user://");
+	if (!dir_access.dir_exists("assets")):
+		return dir_access.make_dir("assets");
 
 # ==========================
 # ===== Signal Methods =====
 # ==========================
 
-func _on_post_curr_text():
+func _on_update_tree():
 	if (finalize.text_is_empty() || editor.text_is_empty()):
 		create_notif_popup.emit("You haven't completed all parts of your post yet!");
 		return;
 	
 	var request = Requests.new();
 	var config = request.load_config();
-	
 	if (!config is ConfigFile):
 		create_error_popup.emit(config["error"], config["error_type"]);
 	
 	# Start preparing the data for post/editing
-	var data = {
-		"action_type": "post_devlog",
-		"commit_msg": "Posted devlog.",
-		"files": [],
-	};
+	var data = { "commit_msg": "Post devlog.", "files": [] };
 	
 	# Replace messages if editing a devlog
-	var edit_ref = post_list.get_edit_ref();
-	if (edit_ref):
-		data["action_type"] = "edit_devlog";
-		data["sha"] = edit_ref.get_meta("sha");
-		data["commit_msg"] = "Edited devlog.";
+	var edit_devlog = post_list.get_edit_devlog();
+	if (edit_devlog.has("sha")):
+		data["sha"] = edit_devlog["sha"];
+		data["commit_msg"] = "Edit devlog.";
+	
+	var upload_location = config.get_value("repo_info", "content_path");
+	var filename = finalize.get_filename();
+	var folder_name = filename.trim_suffix("." + filename.get_extension());
+	upload_location = upload_location + folder_name + "/";
 	
 	# The plain text content
 	data["files"].append({
 		"content": Marshalls.utf8_to_base64(text_preview.get_text()),
-		"path": config.get_value("repo_info", "content_path") + finalize.get_filename(),
-		"mode": "100644", # file blob
-		"type": "blob",
+		"path": upload_location + filename, # location of file in repository
+		"mode": "100644", "type": "blob" # file blob
 	});
 	
-	# Image(s) data encoded in base64
-	var imgs: Array[String] = text_preview.process_post_for_imgs(images.img_list);
+	# Image(s) data to encode in base64
+	var imgs: Array[String] = text_preview.process_post_for_imgs(images);
 	for img_path in imgs:
 		var img_data = Image.new();
-		img_data.load("user://assets/%s" % img_path);
+		img_data.load(img_path);
 		var encoded_bytes = Marshalls.raw_to_base64(img_data.save_png_to_buffer());
 		data["files"].append({
 			"content": encoded_bytes,
-			"path": img_path, # location of file in repository
-			"mode": "100644", # file blob
-			"type": "blob"
+			"path": upload_location + "images/" + img_path.get_file(),
+			"mode": "100644", "type": "blob" 
 		});
 	
 	# Get the reference to the branch the changes will be committed to
@@ -127,6 +132,77 @@ func _on_post_curr_text():
 		data["files"][i]["sha"] = file_shas[i];
 	
 	file_shas = [];
+	result = await request.create_tree(self, head_ref_sha, data["files"]);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout; # for secondary rate limit
+	
+	var new_tree_sha = tree_sha;
+	tree_sha = "";
+	result = await request.create_commit(self, data["commit_msg"], [head_ref_sha], new_tree_sha);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout;
+	
+	var new_commit_sha = commit_sha;
+	commit_sha = "";
+	var curr_action = "update_ref_upload" if !edit_devlog.has("sha") else "update_ref_edit";
+	result = await request.update_ref(self, curr_action, new_commit_sha);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"];
+	await get_tree().create_timer(1.0).timeout;
+	
+	if (!edit_devlog.has("sha")):
+		post_list.update_directory(folder_name, "add_filename");
+	
+	clear_post();
+
+
+func _on_delete_tree(delete_devlog_info: Dictionary):
+	var request = Requests.new();
+	var config = request.load_config();
+	if (!config is ConfigFile):
+		create_error_popup.emit(config["error"], config["error_type"]);
+		return;
+	
+	# Start preparing the data for post/editing
+	var data = { "commit_msg": "Delete devlog.", "files": [] };
+	
+	var folder_name = delete_devlog_info["folder_name"];
+	var upload_location = config.get_value("repo_info", "content_path") + folder_name + "/";
+	var filename = folder_name + ".txt";
+	
+	# The text file to delete
+	data["files"].append({ "sha": null, "path": upload_location + filename, "mode": "100644", "type": "blob" });
+	
+	# Images to delete related to the devlog
+	var imgs: Array[String] = text_preview.get_img_lines(delete_devlog_info["decoded_content"]);
+	for img_path in imgs:
+		data["files"].append({
+			"sha": null,
+			"path": upload_location + "images/" + img_path.get_file(),
+			"mode": "100644", "type": "blob" 
+		});
+	
+	# Get the reference to the branch the changes will be committed to
+	var result = request.get_ref(self);
+	if (result.has("error")):
+		create_error_popup.emit(result["error"], result["error_type"]);
+		return;
+	
+	await result["request_signal"]; # make sure ref is collected
+	
+	var head_ref_sha = branch_ref;
+	branch_ref = "";
 	
 	result = await request.create_tree(self, head_ref_sha, data["files"]);
 	if (result.has("error")):
@@ -138,7 +214,6 @@ func _on_post_curr_text():
 	
 	var new_tree_sha = tree_sha;
 	tree_sha = "";
-	
 	result = await request.create_commit(self, data["commit_msg"], [head_ref_sha], new_tree_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -149,8 +224,7 @@ func _on_post_curr_text():
 	
 	var new_commit_sha = commit_sha;
 	commit_sha = "";
-	
-	result = await request.update_ref(self, new_commit_sha);
+	result = await request.update_ref(self, "update_ref_deletion", new_commit_sha);
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
 		return;
@@ -158,16 +232,8 @@ func _on_post_curr_text():
 	await result["request_signal"];
 	await get_tree().create_timer(1.0).timeout;
 	
-	# TODO update SHA and add post info as before SHA unicode for null  ('\0') is not usable in Godot
-	
-	if (edit_ref): # edited post, dir stays the same
-		#edit_ref.set_meta("sha", response["content"]["sha"]);
-		clear_post();
-	else: # new post, update dir, visuals
-		#var info = response["content"];
-		#post_list.create_post_info(["name"], info["download_url"], info["sha"]);
-		post_list.update_directory(finalize.get_filename(), "add_filename");
-		clear_post();
+	post_list.update_directory(folder_name, "delete_dir");
+	delete_devlog_info.clear();
 
 
 func _on_text_changed_preview(_new_text: String) -> void:
@@ -189,28 +255,16 @@ func _on_http_request_completed(result, response_code, _headers, body, action):
 	match response_code:
 		HTTPClient.RESPONSE_OK: # update post
 			match action:
-				#"edit_devlog":
-					#var info = response["content"];
-					#var edit_ref = post_list.get_edit_ref();
-					#if (edit_ref != null):
-						#edit_ref.set_meta("sha", info["sha"]);
-						#post_list.set_edit_ref(null);
-						#clear_post();
 				"get_ref":
 					branch_ref = response["object"]["sha"];
 				"update_ref":
 					pass;
 		HTTPClient.RESPONSE_CREATED: # new post
 			match action:
-				#"post_devlog":
-					#var info = response["content"];
-					#post_list.create_post_info(info["name"], info["download_url"], info["sha"]);
-					#post_list.update_directory_file(info["name"], "add");
-					#clear_post();
 				"create_blob":
 					file_shas.append(response["sha"]); # only need sha of blob
 				"create_tree":
-					tree_sha = response["sha"];
+					tree_sha = response["sha"]; # main tree sha
 				"create_commit":
 					commit_sha = response["sha"];
 		_:
@@ -251,7 +305,7 @@ func clear_post():
 	
 	creation_date = "";
 	
-	post_list.set_edit_ref(null);
+	post_list.clear_edit_devlog();
 
 
 func update_preview():
@@ -261,15 +315,13 @@ func update_preview():
 		"post_title": finalize.get_post_title(),
 		"post_summary": finalize.get_post_summary(),
 		"post_body": editor.get_text(),
-		"post_images": images.img_list
+		"post_images": images
 	});
-
 
 
 # ============================
 # ===== Helper Functions =====
 # ============================
-
 
 
 func get_curr_formatted_date():
@@ -305,54 +357,33 @@ func _on_export_file():
 		return;
 	
 	file_dialog.export_file(
-		finalize.get_filename(), 
-		text_preview.get_text(), 
-		text_preview.process_post_for_imgs(images.img_list)
+		finalize.get_filename(), text_preview.get_text(), 
+		text_preview.process_post_for_imgs(images)
 	);
-
-
-func _on_import_file():
-	file_dialog.import_file();
-
-
-func _on_import_image():
-	file_dialog.import_image();
-
-
-func _on_collected_img(img_data, img_name: String, img_path: String):
-	images.save_img(img_data, img_name, img_path);
 
 
 func _on_connect_startup(component: String):
 	match component:
 		"menu_options":
 			menu_options.get_devlogs.connect(post_list._on_get_devlogs);
-			menu_options.post_curr_text.connect(_on_post_curr_text);
+			menu_options.post_curr_text.connect(_on_update_tree);
 			menu_options.clear_text.connect(_on_clear_text);
-			menu_options.import_image_file.connect(_on_import_image);
-			menu_options.import_file.connect(_on_import_file);
+			menu_options.import_image_file.connect(file_dialog.import_image);
+			menu_options.import_file.connect(file_dialog.import_file);
 			menu_options.export_file.connect(_on_export_file);
 		"file_dialog":
 			file_dialog.clear_post.connect(clear_post);
 			file_dialog.fill_in_details.connect(fill_in_details);
-			file_dialog.collected_img.connect(_on_collected_img);
-			file_dialog.create_notif_popup.connect(workspace_container.create_notif_popup);
-			file_dialog.create_action_popup.connect(workspace_container.create_action_popup);
+			file_dialog.add_to_image_list.connect(images.build_img_part);
 		"images":
-			images.create_notif_popup.connect(workspace_container.create_notif_popup);
-			images.create_action_popup.connect(workspace_container.create_action_popup);
+			pass;
 		"verify_user":
 			verify_user.enable_buttons.connect(_on_enable_buttons);
 			verify_user.refresh_token_expired.connect(_on_token_expired.bind(true));
 			verify_user.user_token_expired.connect(_on_token_expired.bind(false));
-			verify_user.create_error_popup.connect(workspace_container.create_error_popup);
-			verify_user.create_notif_popup.connect(workspace_container.create_notif_popup);
 		"settings":
-			settings.create_error_popup.connect(workspace_container.create_error_popup);
-			settings.create_notif_popup.connect(workspace_container.create_notif_popup);
+			pass;
 		"devlogs_list":
 			post_list.clear_post.connect(clear_post);
 			post_list.fill_in_details.connect(fill_in_details);
-			post_list.create_error_popup.connect(workspace_container.create_error_popup);
-			post_list.create_notif_popup.connect(workspace_container.create_notif_popup);
-			post_list.create_action_popup.connect(workspace_container.create_action_popup);
+			post_list.delete_a_devlog.connect(_on_delete_tree);

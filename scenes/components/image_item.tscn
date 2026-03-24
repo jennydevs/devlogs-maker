@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://ddfp880ybgflb"]
+
+[ext_resource type="StyleBox" uid="uid://b4lln4fbs8r84" path="res://assets/materials/image_part.tres" id="1_3htg4"]
+
+[node name="ImageItem" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("1_3htg4")
+metadata/file_path = false
+
+[node name="HB" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Tex" type="TextureRect" parent="HB"]
+texture_filter = 1
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+expand_mode = 5
+stretch_mode = 5
+
+[node name="Filename" type="Label" parent="HB"]
+layout_mode = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 4
+
+[node name="Copy" type="Button" parent="HB"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Copy"
+
+[node name="Delete" type="Button" parent="HB"]
+layout_mode = 2
+size_flags_vertical = 4
+text = "Delete"
+
+[node name="MarginContainer" type="MarginContainer" parent="HB"]
+layout_mode = 2
