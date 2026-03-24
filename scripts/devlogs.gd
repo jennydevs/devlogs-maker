@@ -259,7 +259,7 @@ func clear_post():
 	
 	creation_date = "";
 	
-	post_list.set_edit_ref(null);
+	post_list.clear_edit_devlog();
 
 
 func update_preview():
