@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://b6pthcskxncuq"]
 
-[node name="PostItem" type="HBoxContainer"]
+[node name="PostItem" type="HBoxContainer" unique_id=2039440456]
 
-[node name="Filename" type="Label" parent="."]
+[node name="Filename" type="Label" parent="." unique_id=1499378903]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Edit" type="Button" parent="."]
+[node name="Edit" type="Button" parent="." unique_id=812757981]
 layout_mode = 2
 text = "Edit"
 
-[node name="Delete" type="Button" parent="."]
+[node name="Delete" type="Button" parent="." unique_id=1507933433]
 layout_mode = 2
 text = "Delete"

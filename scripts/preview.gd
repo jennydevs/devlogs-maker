@@ -21,11 +21,15 @@ var plain_text_post: String = "";
 func update_preview(post_data: Dictionary):
 	clear_text();
 	
-	var text = "";
-	text += post_data["edit_date"] + "\n";
-	text += post_data["creation_date"] + "\n";
-	text += post_data["post_title"] + "\n";
-	text += post_data["post_summary"] + "\n";
+	var text = "---\n";
+	text += "slug: " + post_data["slug"] + "\n";
+	text += "date: " + post_data["creation_date"] + "\n";
+	text += "edit_date: " + post_data["edit_date"] + "\n";
+	text += "title: " + post_data["post_title"] + "\n";
+	text += "description: " + post_data["post_summary"] + "\n";
+	text += "featuredImage: " + post_data["featuredImage"] + "\n";
+	text += "tags: " + "[" + ",".join(PackedStringArray(post_data["tags"])) + "]" + "\n";
+	text += "---\n\n";
 	text += post_data["post_body"];
 	plain_text_post = text;
 	

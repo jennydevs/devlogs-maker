@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dh4s812fafwvb"]
+[gd_scene format=3 uid="uid://dh4s812fafwvb"]
 
 [ext_resource type="Script" uid="uid://e3qnkxfy3clv" path="res://scripts/devlogs_list.gd" id="1_u2hqf"]
 
-[node name="Devlogs List" type="MarginContainer"]
+[node name="Devlogs List" type="MarginContainer" unique_id=1120185032]
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 14
@@ -10,15 +10,15 @@ theme_override_constants/margin_bottom = 14
 script = ExtResource("1_u2hqf")
 metadata/_tab_index = 3
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=996977462]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="List" type="VBoxContainer" parent="ScrollContainer"]
+[node name="List" type="VBoxContainer" parent="ScrollContainer" unique_id=949714176]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Title" type="Label" parent="ScrollContainer/List"]
+[node name="Title" type="Label" parent="ScrollContainer/List" unique_id=1979469649]
 layout_mode = 2
 text = "Current Devlogs"

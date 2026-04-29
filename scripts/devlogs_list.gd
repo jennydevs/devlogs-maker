@@ -13,7 +13,6 @@ extends MarginContainer
 var devlogs = {};
 var edit_devlog = {}; #"name": "", "sha": "", "decoded_content": ""
 var delete_devlog = {}; # "decoded_content", "folder_name": ""
-var directory = { "name": "directory.txt", "sha": "", "data": "" };
 
 # =====================
 # ====== Signals ======
@@ -72,9 +71,6 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 					edit_devlog["sha"] = response["sha"];
 					edit_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
 					fill_in_devlog();
-				"get_directory":
-					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
-					directory["sha"] = response["sha"];
 				"get_devlog_to_delete":
 					delete_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
 				_:
@@ -93,7 +89,10 @@ func _on_edit_button_pressed(folder_name: String):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
+	var content_path = config.get_value("repo_info", "content_path");
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var devlog_path = content_path + folder_name + "/" + folder_name + ".md";
 	var result = request.get_files(self, "get_devlog_to_edit", devlog_path);
 	
 	if (result.has("error")):
@@ -115,8 +114,12 @@ func _on_serious_delete_button_pressed(folder_name: String):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
-	var result = request.get_files(self, "get_devlog_to_delete", devlog_path);
+	var content_path = config.get_value("repo_info", "content_path")
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var devlog_location = content_path;
+	devlog_location += folder_name + "/" + folder_name + ".md";
+	var result = request.get_files(self, "get_devlog_to_delete", devlog_location);
 	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
@@ -167,20 +170,41 @@ func clear_list():
 
 func fill_in_devlog():
 	var whole_devlog = edit_devlog["decoded_content"];
-	var text_chunks = whole_devlog.rsplit("\n");
+	const FRONTMATTER_LINES = 7; # doesn't include "---"
+	var text_chunks = whole_devlog.split("\n");
+	var offset = 1; # skips one '---'
+	var frontmatter = {};
+	for i in FRONTMATTER_LINES + offset:
+		var curr_data;
+		var data = text_chunks[i].split(":", 0);
+		if (data.size() < 2): # the '---'
+			continue;
+		data[1] = data[1].dedent();
+		if (!data[1].contains("[")):
+			data[1] = data[1].trim_prefix("\"");
+			data[1] = data[1].trim_suffix("\"");
+			curr_data = data[1];
+		else: # tags arr
+			data[1] = data[1].trim_prefix("[");
+			data[1] = data[1].trim_suffix("]");
+			var tags = data[1].split(",");
+			for j in range(0, tags.size()):
+				tags[j] = tags[j].dedent();
+			curr_data = Array(tags);
+		
+		frontmatter[data[0]] = curr_data; # based on front matter given (may have custom data)
+	
 	var post_data = {
-		"filename": edit_devlog["name"], "creation_date": text_chunks[1],
-		"post_title": text_chunks[2], "post_summary": text_chunks[3]
+		"filename": edit_devlog["name"], "creation_date": frontmatter["date"],
+		"post_title": frontmatter["title"], "post_summary": frontmatter["description"],
+		"tags": frontmatter["tags"], "featuredImage": frontmatter["featuredImage"]
 	};
 	
-	var str_len = 0;
-	for i in range(4): # get the start of the text body in character length
-		str_len += text_chunks[i].length();
-	post_data["post_body"] = whole_devlog.substr(str_len + 4, -1); # 4 of '\n' included
+	var body = Array(text_chunks.slice(FRONTMATTER_LINES + offset + offset));
+	post_data["post_body"] = "\n".join(body);
+	#post_data["post_body"] = body.reduce(func(body_str, curr_str): return body_str + "\n" + curr_str);
 	
 	fill_in_details.emit(post_data);
-	
-	#create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
 
 
 func get_edit_devlog():
@@ -189,47 +213,3 @@ func get_edit_devlog():
 
 func clear_edit_devlog():
 	edit_devlog.clear();
-
-## Update the directory given a filename and an action 
-## action: String, "add_filename" / "delete_filename" 
-func update_directory(folder_name: String, action: String):
-	# ensure the name doesn't have any extensions
-	var trimmed_folder_name = folder_name.trim_suffix("." + folder_name.get_extension());
-	var request = Requests.new();
-	var config = request.load_config();
-	if (!config is ConfigFile):
-		create_error_popup.emit(config["error"], config["error_type"]);
-		return;
-	
-	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
-	var result = request.get_files(self, "get_directory", directory_path);
-	if (result.has("error")):
-		create_error_popup.emit(result["error"], result["error_type"]);
-		return;
-	
-	await result["request_signal"];
-	
-	var commit_data = { "sha": directory["sha"] };
-	var update_content = directory["data"];
-	
-	if (action == "add_filename"):
-		update_content = trimmed_folder_name + "\n" + directory["data"];
-		commit_data["msg"] = "Add devlog to directory.";
-	elif (action == "delete_dir"):
-		var index = directory["data"].find(trimmed_folder_name);
-		if (index == -1): return;
-		update_content = directory["data"].erase(index, trimmed_folder_name.length() + 1); # + '\n'
-		commit_data["msg"] = "Delete devlog from directory.";
-	
-	commit_data["content"] = update_content;
-	
-	# Update directory with modified content
-	result = request.create_update_file(self, "edit_directory", directory_path, commit_data);
-	if (result.has("error")):
-		create_error_popup.emit(result["error"], result["error_type"]);
-		return;
-	
-	await result["request_signal"];
-	await get_tree().create_timer(1.0).timeout;
-	
-	_on_get_devlogs();

@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=15 format=3 uid="uid://bg45fa5ynd7fs"]
+[gd_resource type="Theme" format=3 uid="uid://bg45fa5ynd7fs"]
 
 [ext_resource type="FontFile" uid="uid://b7htxquxgsgdt" path="res://assets/fonts/CourierPrime-Regular.ttf" id="1_pwgot"]
 [ext_resource type="StyleBox" uid="uid://djnhdn6udnimd" path="res://assets/materials/line_edit.tres" id="2_6k8fh"]
