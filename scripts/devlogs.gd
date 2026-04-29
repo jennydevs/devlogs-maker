@@ -162,7 +162,7 @@ func _on_update_tree():
 	await get_tree().create_timer(1.0).timeout;
 	
 	if (!edit_devlog.has("sha")):
-		post_list.update_directory(folder_name, "add_filename");
+		pass;
 	
 	clear_post();
 
@@ -232,7 +232,6 @@ func _on_delete_tree(delete_devlog_info: Dictionary):
 	await result["request_signal"];
 	await get_tree().create_timer(1.0).timeout;
 	
-	post_list.update_directory(folder_name, "delete_dir");
 	delete_devlog_info.clear();
 
 

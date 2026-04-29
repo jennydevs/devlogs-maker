@@ -13,7 +13,6 @@ extends MarginContainer
 var devlogs = {};
 var edit_devlog = {}; #"name": "", "sha": "", "decoded_content": ""
 var delete_devlog = {}; # "decoded_content", "folder_name": ""
-var directory = { "name": "directory.txt", "sha": "", "data": "" };
 
 # =====================
 # ====== Signals ======
@@ -72,9 +71,6 @@ func _on_http_request_completed(result, response_code, _headers, body, action: S
 					edit_devlog["sha"] = response["sha"];
 					edit_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
 					fill_in_devlog();
-				"get_directory":
-					directory["data"] = Marshalls.base64_to_utf8(response["content"]);
-					directory["sha"] = response["sha"];
 				"get_devlog_to_delete":
 					delete_devlog["decoded_content"] = Marshalls.base64_to_utf8(response["content"]);
 				_:
@@ -189,47 +185,3 @@ func get_edit_devlog():
 
 func clear_edit_devlog():
 	edit_devlog.clear();
-
-## Update the directory given a filename and an action 
-## action: String, "add_filename" / "delete_filename" 
-func update_directory(folder_name: String, action: String):
-	# ensure the name doesn't have any extensions
-	var trimmed_folder_name = folder_name.trim_suffix("." + folder_name.get_extension());
-	var request = Requests.new();
-	var config = request.load_config();
-	if (!config is ConfigFile):
-		create_error_popup.emit(config["error"], config["error_type"]);
-		return;
-	
-	var directory_path = config.get_value("repo_info", "content_path") + directory["name"];
-	var result = request.get_files(self, "get_directory", directory_path);
-	if (result.has("error")):
-		create_error_popup.emit(result["error"], result["error_type"]);
-		return;
-	
-	await result["request_signal"];
-	
-	var commit_data = { "sha": directory["sha"] };
-	var update_content = directory["data"];
-	
-	if (action == "add_filename"):
-		update_content = trimmed_folder_name + "\n" + directory["data"];
-		commit_data["msg"] = "Add devlog to directory.";
-	elif (action == "delete_dir"):
-		var index = directory["data"].find(trimmed_folder_name);
-		if (index == -1): return;
-		update_content = directory["data"].erase(index, trimmed_folder_name.length() + 1); # + '\n'
-		commit_data["msg"] = "Delete devlog from directory.";
-	
-	commit_data["content"] = update_content;
-	
-	# Update directory with modified content
-	result = request.create_update_file(self, "edit_directory", directory_path, commit_data);
-	if (result.has("error")):
-		create_error_popup.emit(result["error"], result["error_type"]);
-		return;
-	
-	await result["request_signal"];
-	await get_tree().create_timer(1.0).timeout;
-	
-	_on_get_devlogs();
