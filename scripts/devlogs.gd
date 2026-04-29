@@ -81,7 +81,10 @@ func _on_update_tree():
 		data["sha"] = edit_devlog["sha"];
 		data["commit_msg"] = "Edit devlog.";
 	
-	var upload_location = config.get_value("repo_info", "content_path");
+	var content_path = config.get_value("repo_info", "content_path");
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var upload_location = content_path;
 	var filename = finalize.get_filename();
 	var folder_name = filename.trim_suffix("." + filename.get_extension());
 	upload_location = upload_location + folder_name + "/";
@@ -101,7 +104,7 @@ func _on_update_tree():
 		var encoded_bytes = Marshalls.raw_to_base64(img_data.save_png_to_buffer());
 		data["files"].append({
 			"content": encoded_bytes,
-			"path": upload_location + "images/" + img_path.get_file(),
+			"path": upload_location + img_path.get_file(),
 			"mode": "100644", "type": "blob" 
 		});
 	
@@ -178,8 +181,14 @@ func _on_delete_tree(delete_devlog_info: Dictionary):
 	var data = { "commit_msg": "Delete devlog.", "files": [] };
 	
 	var folder_name = delete_devlog_info["folder_name"];
-	var upload_location = config.get_value("repo_info", "content_path") + folder_name + "/";
-	var filename = folder_name + ".txt";
+	
+	var content_path = config.get_value("repo_info", "content_path");
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var upload_location = content_path;
+	upload_location += folder_name + "/";
+	
+	var filename = folder_name + ".md";
 	
 	# The text file to delete
 	data["files"].append({ "sha": null, "path": upload_location + filename, "mode": "100644", "type": "blob" });
@@ -189,7 +198,7 @@ func _on_delete_tree(delete_devlog_info: Dictionary):
 	for img_path in imgs:
 		data["files"].append({
 			"sha": null,
-			"path": upload_location + "images/" + img_path.get_file(),
+			"path": upload_location + img_path.get_file(),
 			"mode": "100644", "type": "blob" 
 		});
 	

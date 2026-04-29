@@ -89,7 +89,10 @@ func _on_edit_button_pressed(folder_name: String):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
+	var content_path = config.get_value("repo_info", "content_path");
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var devlog_path = content_path + folder_name + "/" + folder_name + ".md";
 	var result = request.get_files(self, "get_devlog_to_edit", devlog_path);
 	
 	if (result.has("error")):
@@ -111,8 +114,12 @@ func _on_serious_delete_button_pressed(folder_name: String):
 		create_error_popup.emit(config["error"], config["error_type"]);
 		return;
 	
-	var devlog_path = config.get_value("repo_info", "content_path") + folder_name + "/" + folder_name + ".txt";
-	var result = request.get_files(self, "get_devlog_to_delete", devlog_path);
+	var content_path = config.get_value("repo_info", "content_path")
+	if (!content_path.ends_with("/")):
+		content_path += "/";
+	var devlog_location = content_path;
+	devlog_location += folder_name + "/" + folder_name + ".md";
+	var result = request.get_files(self, "get_devlog_to_delete", devlog_location);
 	
 	if (result.has("error")):
 		create_error_popup.emit(result["error"], result["error_type"]);
