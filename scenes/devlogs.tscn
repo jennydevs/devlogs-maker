@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cg4hagqhec5ke"]
+[gd_scene format=3 uid="uid://cg4hagqhec5ke"]
 
 [ext_resource type="Theme" uid="uid://bg45fa5ynd7fs" path="res://assets/themes/theme_mail.tres" id="1_i2wg7"]
 [ext_resource type="Script" uid="uid://bmgtgee10j35f" path="res://scripts/devlogs.gd" id="2_00vko"]
@@ -19,7 +19,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_1bv88"]
 shader = ExtResource("3_oqjq2")
 
-[node name="Devlogs" type="MarginContainer"]
+[node name="Devlogs" type="MarginContainer" unique_id=737440484]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -30,11 +30,11 @@ size_flags_vertical = 3
 theme = ExtResource("1_i2wg7")
 script = ExtResource("2_00vko")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=2028665673]
 layout_mode = 2
 color = Color(0.129412, 0.878431, 0.886275, 1)
 
-[node name="TextureRect" type="TextureRect" parent="."]
+[node name="TextureRect" type="TextureRect" parent="." unique_id=154061494]
 texture_filter = 1
 texture_repeat = 2
 material = SubResource("ShaderMaterial_1bv88")
@@ -44,88 +44,88 @@ size_flags_stretch_ratio = 0.0
 texture = ExtResource("4_enp6g")
 stretch_mode = 6
 
-[node name="HB" type="HBoxContainer" parent="."]
+[node name="HB" type="HBoxContainer" parent="." unique_id=2121011663]
 layout_mode = 2
 
-[node name="S1" type="MarginContainer" parent="HB"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.15
-
-[node name="MenuOptions" parent="HB" instance=ExtResource("4_bwtfv")]
-layout_mode = 2
-
-[node name="S2" type="MarginContainer" parent="HB"]
+[node name="S1" type="MarginContainer" parent="HB" unique_id=445047016]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.15
 
-[node name="VB" type="VBoxContainer" parent="HB"]
+[node name="MenuOptions" parent="HB" unique_id=1980181539 instance=ExtResource("4_bwtfv")]
+layout_mode = 2
+
+[node name="S2" type="MarginContainer" parent="HB" unique_id=305433918]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.15
+
+[node name="VB" type="VBoxContainer" parent="HB" unique_id=1637813083]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 5.0
 
-[node name="S3" type="MarginContainer" parent="HB/VB"]
+[node name="S3" type="MarginContainer" parent="HB/VB" unique_id=528047337]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.05
 
-[node name="Workspace" type="MarginContainer" parent="HB/VB"]
+[node name="Workspace" type="MarginContainer" parent="HB/VB" unique_id=1612121762]
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("6_n2wff")
 
-[node name="Modules" type="TabContainer" parent="HB/VB/Workspace"]
+[node name="Modules" type="TabContainer" parent="HB/VB/Workspace" unique_id=1429812084]
 layout_mode = 2
 current_tab = 0
 drag_to_rearrange_enabled = true
 
-[node name="Finalize" parent="HB/VB/Workspace/Modules" instance=ExtResource("6_kycab")]
+[node name="Finalize" parent="HB/VB/Workspace/Modules" unique_id=571924507 instance=ExtResource("6_kycab")]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="Editor" parent="HB/VB/Workspace/Modules" instance=ExtResource("7_pu2kp")]
+[node name="Editor" parent="HB/VB/Workspace/Modules" unique_id=219901177 instance=ExtResource("7_pu2kp")]
 visible = false
 layout_mode = 2
 
-[node name="Preview" parent="HB/VB/Workspace/Modules" instance=ExtResource("8_ah82n")]
+[node name="Preview" parent="HB/VB/Workspace/Modules" unique_id=1223672130 instance=ExtResource("8_ah82n")]
 visible = false
 layout_mode = 2
 
-[node name="Devlogs List" parent="HB/VB/Workspace/Modules" instance=ExtResource("8_kywa6")]
+[node name="Devlogs List" parent="HB/VB/Workspace/Modules" unique_id=1279975644 instance=ExtResource("8_kywa6")]
 visible = false
 layout_mode = 2
 
-[node name="Images" parent="HB/VB/Workspace/Modules" instance=ExtResource("12_hsrji")]
+[node name="Images" parent="HB/VB/Workspace/Modules" unique_id=208484160 instance=ExtResource("12_hsrji")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 4
 
-[node name="Verify User" parent="HB/VB/Workspace/Modules" instance=ExtResource("7_36a3x")]
+[node name="Verify User" parent="HB/VB/Workspace/Modules" unique_id=223249885 instance=ExtResource("7_36a3x")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 5
 
-[node name="Settings" parent="HB/VB/Workspace/Modules" instance=ExtResource("7_adelr")]
+[node name="Settings" parent="HB/VB/Workspace/Modules" unique_id=1983416689 instance=ExtResource("7_adelr")]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 6
 
-[node name="Border" parent="HB/VB/Workspace" instance=ExtResource("6_hcaqf")]
+[node name="Border" parent="HB/VB/Workspace" unique_id=520379753 instance=ExtResource("6_hcaqf")]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_top = 30
 
-[node name="FileDialog" parent="HB/VB/Workspace" instance=ExtResource("13_h1vm4")]
+[node name="FileDialog" parent="HB/VB/Workspace" unique_id=1100872057 instance=ExtResource("13_h1vm4")]
 
-[node name="S4" type="MarginContainer" parent="HB/VB"]
+[node name="S4" type="MarginContainer" parent="HB/VB" unique_id=2034018215]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.05
 
-[node name="S5" type="MarginContainer" parent="HB"]
+[node name="S5" type="MarginContainer" parent="HB" unique_id=412869517]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.15
