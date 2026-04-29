@@ -163,20 +163,41 @@ func clear_list():
 
 func fill_in_devlog():
 	var whole_devlog = edit_devlog["decoded_content"];
-	var text_chunks = whole_devlog.rsplit("\n");
+	const FRONTMATTER_LINES = 7; # doesn't include "---"
+	var text_chunks = whole_devlog.split("\n");
+	var offset = 1; # skips one '---'
+	var frontmatter = {};
+	for i in FRONTMATTER_LINES + offset:
+		var curr_data;
+		var data = text_chunks[i].split(":", 0);
+		if (data.size() < 2): # the '---'
+			continue;
+		data[1] = data[1].dedent();
+		if (!data[1].contains("[")):
+			data[1] = data[1].trim_prefix("\"");
+			data[1] = data[1].trim_suffix("\"");
+			curr_data = data[1];
+		else: # tags arr
+			data[1] = data[1].trim_prefix("[");
+			data[1] = data[1].trim_suffix("]");
+			var tags = data[1].split(",");
+			for j in range(0, tags.size()):
+				tags[j] = tags[j].dedent();
+			curr_data = Array(tags);
+		
+		frontmatter[data[0]] = curr_data; # based on front matter given (may have custom data)
+	
 	var post_data = {
-		"filename": edit_devlog["name"], "creation_date": text_chunks[1],
-		"post_title": text_chunks[2], "post_summary": text_chunks[3]
+		"filename": edit_devlog["name"], "creation_date": frontmatter["date"],
+		"post_title": frontmatter["title"], "post_summary": frontmatter["description"],
+		"tags": frontmatter["tags"], "featuredImage": frontmatter["featuredImage"]
 	};
 	
-	var str_len = 0;
-	for i in range(4): # get the start of the text body in character length
-		str_len += text_chunks[i].length();
-	post_data["post_body"] = whole_devlog.substr(str_len + 4, -1); # 4 of '\n' included
+	var body = Array(text_chunks.slice(FRONTMATTER_LINES + offset + offset));
+	post_data["post_body"] = "\n".join(body);
+	#post_data["post_body"] = body.reduce(func(body_str, curr_str): return body_str + "\n" + curr_str);
 	
 	fill_in_details.emit(post_data);
-	
-	#create_notif_popup.emit("Not a recognizable file name!\nPlease edit a different file.");
 
 
 func get_edit_devlog():
