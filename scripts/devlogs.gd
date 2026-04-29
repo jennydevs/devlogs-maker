@@ -335,11 +335,11 @@ func update_preview():
 func get_curr_formatted_date():
 	var curr_time = Time.get_datetime_dict_from_system();
 	
-	var formatted_date = "%d." % curr_time["year"];
+	var formatted_date = "%d-" % curr_time["year"];
 	if (curr_time["month"] < 10):
 		formatted_date += "0";
 		
-	formatted_date += "%d." % curr_time["month"];
+	formatted_date += "%d-" % curr_time["month"];
 	
 	if (curr_time["day"] < 10):
 		formatted_date += "0";
